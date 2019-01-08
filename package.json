@@ -1,0 +1,23 @@
+{
+  "name": "browser-plugin",
+  "version": "0.0.1",
+  "description": "Jaxcore plugin for controlling web apps",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://jaxcore@bitbucket.org/jaxcore/browser-plugin.git"
+  },
+  "author": "Jaxcore",
+  "license": "ISC",
+  "homepage": "https://bitbucket.org/jaxcore/browser-plugin#readme",
+  "dependencies": {
+    "express": "^4.16.4",
+    "socket.io": "^2.2.0"
+  }
+}
