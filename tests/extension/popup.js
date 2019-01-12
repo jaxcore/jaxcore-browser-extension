@@ -57,28 +57,28 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 // For simple requests:
-chrome.runtime.onMessageExternal.addListener(
-    function (request, sender, sendResponse) {
-        // if (sender.id == blocklistedExtension)
-        //     return;  // don't allow this extension access
-
-        console.log('received', request);
-        
-        document.body.style.backgroundColor = 'green';
-
-        // if (request.getTargetData) {
-        //     sendResponse({ targetData: targetData });
-        // }
-        // else if (request.activateLasers) {
-        //     var success = activateLasers();
-        //     sendResponse({ activateLasers: success });
-        // }
-    });
-
-// For long-lived connections:
-chrome.runtime.onConnectExternal.addListener(function (port) {
-    port.onMessage.addListener(function (msg) {
-        // See other examples for sample onMessage handlers.
-        console.log('wuuuu')
-    });
-});
+// chrome.runtime.onMessageExternal.addListener(
+//     function (request, sender, sendResponse) {
+//         // if (sender.id == blocklistedExtension)
+//         //     return;  // don't allow this extension access
+//
+//         console.log('received', request);
+//
+//         document.body.style.backgroundColor = 'green';
+//
+//         // if (request.getTargetData) {
+//         //     sendResponse({ targetData: targetData });
+//         // }
+//         // else if (request.activateLasers) {
+//         //     var success = activateLasers();
+//         //     sendResponse({ activateLasers: success });
+//         // }
+//     });
+//
+// // For long-lived connections:
+// chrome.runtime.onConnectExternal.addListener(function (port) {
+//     port.onMessage.addListener(function (msg) {
+//         // See other examples for sample onMessage handlers.
+//         console.log('wuuuu')
+//     });
+// });
