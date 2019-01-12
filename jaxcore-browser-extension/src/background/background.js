@@ -1,6 +1,6 @@
 import io from 'socket.io-client';
 
-function connect() {
+function connect(onConnect, onDisconnect) {
 	var port = 37524;
 	console.log('connecting port ' + port + ' ...');
 	
@@ -9,13 +9,36 @@ function connect() {
 	
 	socket.on('connect', () => {
 		console.log('Socket connected');
-		alert('connected');
+		//alert('connected');
+		
+		var c = 0;
+		setInterval(function() {
+			socket.send({
+				background: 'hello',
+				count: c++
+			});
+		}, 3000);
+		
+		onConnect(socket);
 	});
 	
 	socket.on('disconnect', () => {
 		console.log('Socket disconnected');
+		onDisconnect(socket);s
 	});
 }
+
+var connectingSocket = false;
+// function connectSocket() {
+// 	if (connectingSocket) return;
+// 	connectingSocket = true;
+// 	connect(() => {
+// 		console.log('connected socket');
+// 		sendResponse({connectedExtension: true});
+// 	}, () => {
+// 		console.log('diconnected socket');
+// 	});
+// }
 
 chrome.runtime.onConnect.addListener(function (port) {
 	console.log('onConnect', port);
@@ -24,11 +47,21 @@ chrome.runtime.onConnect.addListener(function (port) {
 	
 	port.onMessage.addListener(function (msg) {
 		
-		console.log('onMessage', msg);
+		console.log('onMessage YY', msg);
 		
-		if (msg.connect) {
-			port.postMessage({connected: true});
+		if (msg.connectExtension) {
+			connect((socket) => {
+				console.log('connected socket');
+				//sendResponse({connectedExtension: true});
+				port.postMessage({connectedExtension: true});
+			}, (socket) => {
+				console.log('diconnected socket');
+			});
+			//port.postMessage({connectedExtension: true});
 		}
+		// else if (msg.connect) {
+		// 	port.postMessage({connected: true});
+		// }
 		else {
 			port.postMessage({blah: true});
 			sendMessageActiveTab({oops:true});
@@ -57,9 +90,23 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 	// if (request.greeting == "hello")
 	// 	sendResponse({farewell: "goodbye"});
 	
-	console.log('onMessage', request);
+	console.log('onMessage XX', request);
 	
-	sendResponse({backgroundResponse: "background says hello"});
+	if (request.connectExtension) {
+		console.log('background received connectExtension ????');
+		
+		// connect(() => {
+		// 	console.log('connected socket');
+		// 	sendResponse({connectedExtension: true});
+		// }, () => {
+		// 	console.log('diconnected socket');
+		// });
+		//sendResponse({connectingExtension: true});
+		
+	}
+	else {
+		sendResponse({backgroundResponse: "background says hello"});
+	}
 });
 
 

@@ -9586,39 +9586,69 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var socket_io_client__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(socket_io_client__WEBPACK_IMPORTED_MODULE_0__);
 
 
-function connect() {
+function connect(onConnect, onDisconnect) {
   var port = 37524;
   console.log('connecting port ' + port + ' ...');
   /* Connects to the socket server */
 
   var socket = socket_io_client__WEBPACK_IMPORTED_MODULE_0___default.a.connect('http://localhost:' + port);
   socket.on('connect', function () {
-    console.log('Socket connected');
-    alert('connected');
+    console.log('Socket connected'); //alert('connected');
+
+    var c = 0;
+    setInterval(function () {
+      socket.send({
+        background: 'hello',
+        count: c++
+      });
+    }, 3000);
+    onConnect(socket);
   });
   socket.on('disconnect', function () {
     console.log('Socket disconnected');
+    onDisconnect(socket);
+    s;
   });
 }
+
+var connectingSocket = false; // function connectSocket() {
+// 	if (connectingSocket) return;
+// 	connectingSocket = true;
+// 	connect(() => {
+// 		console.log('connected socket');
+// 		sendResponse({connectedExtension: true});
+// 	}, () => {
+// 		console.log('diconnected socket');
+// 	});
+// }
 
 chrome.runtime.onConnect.addListener(function (port) {
   console.log('onConnect', port); //onsole.assert(port.name == "knockknock");
 
   port.onMessage.addListener(function (msg) {
-    console.log('onMessage', msg);
+    console.log('onMessage YY', msg);
 
-    if (msg.connect) {
-      port.postMessage({
-        connected: true
-      });
-    } else {
-      port.postMessage({
-        blah: true
-      });
-      sendMessageActiveTab({
-        oops: true
-      });
-    } //
+    if (msg.connectExtension) {
+      connect(function (socket) {
+        console.log('connected socket'); //sendResponse({connectedExtension: true});
+
+        port.postMessage({
+          connectedExtension: true
+        });
+      }, function (socket) {
+        console.log('diconnected socket');
+      }); //port.postMessage({connectedExtension: true});
+    } // else if (msg.connect) {
+    // 	port.postMessage({connected: true});
+    // }
+    else {
+        port.postMessage({
+          blah: true
+        });
+        sendMessageActiveTab({
+          oops: true
+        });
+      } //
     //
     // 	// if (msg.joke == "Knock knock")
     // 	// 	port.postMessage({question: "Who's there?"});
@@ -9636,10 +9666,21 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   console.log('BG', sender.tab ? "from a content script:" + sender.tab.url : "from the extension"); // if (request.greeting == "hello")
   // 	sendResponse({farewell: "goodbye"});
 
-  console.log('onMessage', request);
-  sendResponse({
-    backgroundResponse: "background says hello"
-  });
+  console.log('onMessage XX', request);
+
+  if (request.connectExtension) {
+    console.log('background received connectExtension ????'); // connect(() => {
+    // 	console.log('connected socket');
+    // 	sendResponse({connectedExtension: true});
+    // }, () => {
+    // 	console.log('diconnected socket');
+    // });
+    //sendResponse({connectingExtension: true});
+  } else {
+    sendResponse({
+      backgroundResponse: "background says hello"
+    });
+  }
 });
 
 function sendMessageActiveTab(msg) {
