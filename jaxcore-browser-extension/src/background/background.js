@@ -1,30 +1,87 @@
 import io from 'socket.io-client';
 
+var isConnected = false;
+var spinSocket;
+var contentPort;
+
 function connect(onConnect, onDisconnect) {
+	if (isConnected) {
+		onConnect(spinSocket);
+		return;
+	}
 	var port = 37524;
 	console.log('connecting port ' + port + ' ...');
 	
 	/* Connects to the socket server */
 	var socket = io.connect('http://localhost:' + port);
 	
+	spinSocket = socket;
+	
 	socket.on('connect', () => {
+		isConnected = true;
+		
 		console.log('Socket connected');
 		//alert('connected');
 		
-		var c = 0;
-		setInterval(function() {
-			socket.send({
-				background: 'hello',
-				count: c++
+		console.log('emit hello');
+		socket.emit({
+			background: 'hello',
+		});
+		
+		const onStore = (store) => {
+			console.log('BG GOT spin-store', store);
+			contentPort.postMessage({
+				spinStore: store
 			});
-		}, 3000);
+		};
+		const onCreated = (id, state) => {
+			console.log('BG GOT spin-created', state);
+			contentPort.postMessage({
+				spinId: id,
+				spinCreated: state
+			});
+		};
+		const onUpdate = (id, state) => {
+			console.log('BG GOT spin-update', state);
+			contentPort.postMessage({
+				spinId: id,
+				spinUpdate: state
+			});
+		};
+		const onDestroyed = (id, state) => {
+			console.log('BG GOT spin-destroyed', state);
+			contentPort.postMessage({
+				spinId: id,
+				spinDestroyed: state
+			});
+		};
+		
+		socket.on('spin-store', onStore);
+		socket.on('spin-created', onCreated);
+		socket.on('spin-update', onUpdate);
+		socket.on('spin-destroyed', onDestroyed);
+		
+		socket.on('disconnect', function() {
+			socket.off('spin-store', onStore);
+			socket.off('spin-created', onCreated);
+			socket.off('spin-update', onUpdate);
+			socket.off('spin-destroyed', onDestroyed);
+		});
+		
+		// var c = 0;
+		// setInterval(function() {
+		// 	console.log('emit spin');
+		// 	socket.emit({
+		// 		spin: -1
+		// 	});
+		// }, 3000);
 		
 		onConnect(socket);
 	});
 	
 	socket.on('disconnect', () => {
 		console.log('Socket disconnected');
-		onDisconnect(socket);s
+		onDisconnect(socket);
 	});
 }
 
@@ -40,12 +97,16 @@ var connectingSocket = false;
 // 	});
 // }
 
-chrome.runtime.onConnect.addListener(function (port) {
+
+function onConnectListener(port) {
 	console.log('onConnect', port);
 	
 	//onsole.assert(port.name == "knockknock");
+	contentPort = port;
 	
-	port.onMessage.addListener(function (msg) {
+	
+	
+	function onMessageListener(msg) {
 		
 		console.log('onMessage YY', msg);
 		
@@ -53,9 +114,10 @@ chrome.runtime.onConnect.addListener(function (port) {
 			connect((socket) => {
 				console.log('connected socket');
 				//sendResponse({connectedExtension: true});
-				port.postMessage({connectedExtension: true});
+				contentPort.postMessage({connectedExtension: true});
 			}, (socket) => {
 				console.log('diconnected socket');
+				
 			});
 			//port.postMessage({connectedExtension: true});
 		}
@@ -78,8 +140,23 @@ chrome.runtime.onConnect.addListener(function (port) {
 		// 	// else {
 		// 	// 	console.log('nopers', msg);
 		// 	// }
+	}
+	
+	port.onMessage.addListener(onMessageListener);
+	
+	port.onDisconnect.addListener(function(event) {
+		console.log('port.onDisconnect ----------------');
+		chrome.runtime.onConnect.removeListener(onConnectListener);
+		port.onMessage.removeListener(onMessageListener);
+		//contentPort = null;
 	});
-});
+}
+
+chrome.runtime.onConnect.addListener(onConnectListener);
+// chrome.runtime.onDisconnect.addListener(() => {
+// 	chrome.runtime.onConnect.removeListener(onConnectListener);
+// 	contentPort = null;
+// });
 
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
@@ -121,14 +198,14 @@ function sendMessageActiveTab(msg) {
 	});
 }
 
-var c = 0;
-setInterval(function() {
-	console.log('background', c++);
-	sendMessageActiveTab({
-		background: true,
-		greeting: "hello",
-		count: c
-	});
-}, 5000);
+// var c = 0;
+// setInterval(function() {
+// 	console.log('background', c++);
+// 	sendMessageActiveTab({
+// 		background: true,
+// 		greeting: "hello",
+// 		count: c
+// 	});
+// }, 5000);
 
 //connect();

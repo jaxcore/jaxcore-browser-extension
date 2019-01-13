@@ -58,6 +58,24 @@ function connectExtension() {
 			console.log('GOT it');
 			alert('connectedExtension');
 		}
+		
+		if (msg.spinStore) {
+			alert('got spin store content');
+			//debugger;
+			window.postMessage(msg, "*");
+		}
+		if (msg.spinCreated) {
+			console.log('spin-created', msg.id, msg.spinCreated);
+			window.postMessage(msg, "*");
+		}
+		if (msg.spinUpdate) {
+			console.log('spin-update', msg.id, msg.spinUpdate);
+			window.postMessage(msg, "*");
+		}
+		if (msg.spinDestroyed) {
+			console.log('spin-destroyed', msg.id, msg.spinDestroyed);
+			window.postMessage(msg, "*");
+		}
 	});
 	
 	bgPort.postMessage({
@@ -68,9 +86,10 @@ function connectExtension() {
 
 window.addEventListener("message", function(event) {
 	// We only accept messages from ourselves
-	if (event.source != window || !event.isTrusted)
+	if (event.source != window || !event.isTrusted) {
+		console.log('NOOOOO');
 		return;
-	
+	}
 	
 	if (event.data.connectExtension) {
 		connectExtension();

@@ -9585,29 +9585,84 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var socket_io_client__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! socket.io-client */ "./node_modules/socket.io-client/lib/index.js");
 /* harmony import */ var socket_io_client__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(socket_io_client__WEBPACK_IMPORTED_MODULE_0__);
 
+var isConnected = false;
+var spinSocket;
+var contentPort;
 
 function connect(onConnect, onDisconnect) {
+  if (isConnected) {
+    onConnect(spinSocket);
+    return;
+  }
+
   var port = 37524;
   console.log('connecting port ' + port + ' ...');
   /* Connects to the socket server */
 
   var socket = socket_io_client__WEBPACK_IMPORTED_MODULE_0___default.a.connect('http://localhost:' + port);
+  spinSocket = socket;
   socket.on('connect', function () {
+    isConnected = true;
     console.log('Socket connected'); //alert('connected');
 
-    var c = 0;
-    setInterval(function () {
-      socket.send({
-        background: 'hello',
-        count: c++
+    console.log('emit hello');
+    socket.emit({
+      background: 'hello'
+    });
+
+    var onStore = function onStore(store) {
+      console.log('BG GOT spin-store', store);
+      contentPort.postMessage({
+        spinStore: store
       });
-    }, 3000);
+    };
+
+    var onCreated = function onCreated(id, state) {
+      console.log('BG GOT spin-created', state);
+      contentPort.postMessage({
+        spinId: id,
+        spinCreated: state
+      });
+    };
+
+    var onUpdate = function onUpdate(id, state) {
+      console.log('BG GOT spin-update', state);
+      contentPort.postMessage({
+        spinId: id,
+        spinUpdate: state
+      });
+    };
+
+    var onDestroyed = function onDestroyed(id, state) {
+      console.log('BG GOT spin-destroyed', state);
+      contentPort.postMessage({
+        spinId: id,
+        spinDestroyed: state
+      });
+    };
+
+    socket.on('spin-store', onStore);
+    socket.on('spin-created', onCreated);
+    socket.on('spin-update', onUpdate);
+    socket.on('spin-destroyed', onDestroyed);
+    socket.on('disconnect', function () {
+      socket.off('spin-store', onStore);
+      socket.off('spin-created', onCreated);
+      socket.off('spin-update', onUpdate);
+      socket.off('spin-destroyed', onDestroyed);
+    }); // var c = 0;
+    // setInterval(function() {
+    // 	console.log('emit spin');
+    // 	socket.emit({
+    // 		spin: -1
+    // 	});
+    // }, 3000);
+
     onConnect(socket);
   });
   socket.on('disconnect', function () {
     console.log('Socket disconnected');
     onDisconnect(socket);
-    s;
   });
 }
 
@@ -9622,17 +9677,19 @@ var connectingSocket = false; // function connectSocket() {
 // 	});
 // }
 
-chrome.runtime.onConnect.addListener(function (port) {
+function onConnectListener(port) {
   console.log('onConnect', port); //onsole.assert(port.name == "knockknock");
 
-  port.onMessage.addListener(function (msg) {
+  contentPort = port;
+
+  function onMessageListener(msg) {
     console.log('onMessage YY', msg);
 
     if (msg.connectExtension) {
       connect(function (socket) {
         console.log('connected socket'); //sendResponse({connectedExtension: true});
 
-        port.postMessage({
+        contentPort.postMessage({
           connectedExtension: true
         });
       }, function (socket) {
@@ -9660,8 +9717,21 @@ chrome.runtime.onConnect.addListener(function (port) {
     // 	// 	console.log('nopers', msg);
     // 	// }
 
+  }
+
+  port.onMessage.addListener(onMessageListener);
+  port.onDisconnect.addListener(function (event) {
+    console.log('port.onDisconnect ----------------');
+    chrome.runtime.onConnect.removeListener(onConnectListener);
+    port.onMessage.removeListener(onMessageListener); //contentPort = null;
   });
-});
+}
+
+chrome.runtime.onConnect.addListener(onConnectListener); // chrome.runtime.onDisconnect.addListener(() => {
+// 	chrome.runtime.onConnect.removeListener(onConnectListener);
+// 	contentPort = null;
+// });
+
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   console.log('BG', sender.tab ? "from a content script:" + sender.tab.url : "from the extension"); // if (request.greeting == "hello")
   // 	sendResponse({farewell: "goodbye"});
@@ -9694,17 +9764,16 @@ function sendMessageActiveTab(msg) {
       });
     }
   });
-}
-
-var c = 0;
-setInterval(function () {
-  console.log('background', c++);
-  sendMessageActiveTab({
-    background: true,
-    greeting: "hello",
-    count: c
-  });
-}, 5000); //connect();
+} // var c = 0;
+// setInterval(function() {
+// 	console.log('background', c++);
+// 	sendMessageActiveTab({
+// 		background: true,
+// 		greeting: "hello",
+// 		count: c
+// 	});
+// }, 5000);
+//connect();
 
 /***/ }),
 
