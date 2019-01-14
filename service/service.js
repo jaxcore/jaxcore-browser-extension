@@ -73,9 +73,15 @@ io.on('connection', function (socket) {
 		Spin.store.removeListener('destroyed', socket._spinDestroy);
 	});
 	
-	socket.emit('spin-store', Spin.store);
+	//socket.emit('spin-store', Spin.store);
 	
 	// socket.emit('hello', {a: 1});
+	
+	socket.on('get-spin-store', function () {
+		const s = JSON.stringify(Spin.store);
+		console.log('get-spin-store', s);
+		socket.emit('spin-store', s);
+	});
 	
 	socket.on('data', function (raw) {
 		var data;

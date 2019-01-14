@@ -1,11 +1,24 @@
 import io from 'socket.io-client';
 
-var isConnected = false;
+var isSocketConnected = false;
 var spinSocket;
 var contentPort;
 
-function connect(onConnect, onDisconnect) {
-	if (isConnected) {
+function disconnect(callback) {
+	
+	if (spinSocket) {
+		spinSocket.on('disconnect', () => {
+			console.log('Socket disconnect() callback');
+			callback();
+		});
+		spinSocket.disconnect();
+	}
+	else callback();
+}
+
+function connect(onConnect, onDisconnect, postMessage) {
+	if (isSocketConnected) {
+		console.log('already connected');
 		onConnect(spinSocket);
 		return;
 	}
@@ -13,12 +26,11 @@ function connect(onConnect, onDisconnect) {
 	console.log('connecting port ' + port + ' ...');
 	
 	/* Connects to the socket server */
-	var socket = io.connect('http://localhost:' + port);
-	
-	spinSocket = socket;
-	
+	spinSocket = io.connect('http://localhost:' + port);
+
+	var socket = spinSocket;
 	socket.on('connect', () => {
-		isConnected = true;
+		isSocketConnected = true;
 		
 		console.log('Socket connected');
 		//alert('connected');
@@ -28,45 +40,7 @@ function connect(onConnect, onDisconnect) {
 			background: 'hello',
 		});
 		
-		const onStore = (store) => {
-			console.log('BG GOT spin-store', store);
-			contentPort.postMessage({
-				spinStore: store
-			});
-		};
-		const onCreated = (id, state) => {
-			console.log('BG GOT spin-created', state);
-			contentPort.postMessage({
-				spinId: id,
-				spinCreated: state
-			});
-		};
-		const onUpdate = (id, state) => {
-			console.log('BG GOT spin-update', state);
-			contentPort.postMessage({
-				spinId: id,
-				spinUpdate: state
-			});
-		};
-		const onDestroyed = (id, state) => {
-			console.log('BG GOT spin-destroyed', state);
-			contentPort.postMessage({
-				spinId: id,
-				spinDestroyed: state
-			});
-		};
 		
-		socket.on('spin-store', onStore);
-		socket.on('spin-created', onCreated);
-		socket.on('spin-update', onUpdate);
-		socket.on('spin-destroyed', onDestroyed);
-		
-		socket.on('disconnect', function() {
-			socket.off('spin-store', onStore);
-			socket.off('spin-created', onCreated);
-			socket.off('spin-update', onUpdate);
-			socket.off('spin-destroyed', onDestroyed);
-		});
 		
 		// var c = 0;
 		// setInterval(function() {
@@ -81,7 +55,11 @@ function connect(onConnect, onDisconnect) {
 	
 	socket.on('disconnect', () => {
 		console.log('Socket disconnected');
-		onDisconnect(socket);
+		// onDisconnect(socket);
+		
+		isSocketConnected = false;
+		
+		spinSocket = null;
 	});
 }
 
@@ -97,28 +75,123 @@ var connectingSocket = false;
 // 	});
 // }
 
+function listenSpinSocket(postMessage) {
+	if (!spinSocket) {
+		console.log('no spin socket');
+		return;
+	}
+	
+	const onStore = (store) => {
+		console.log('BG GOT spin-store', store);
+		postMessage({
+			spinStore: store
+		});
+	};
+	const onCreated = (id, state) => {
+		console.log('BG GOT spin-created', state);
+		postMessage({
+			spinId: id,
+			spinCreated: state
+		});
+	};
+	const onUpdate = (id, state) => {
+		console.log('BG GOT spin-update', state);
+		postMessage({
+			spinId: id,
+			spinUpdate: state
+		});
+	};
+	const onDestroyed = (id, state) => {
+		console.log('BG GOT spin-destroyed', state);
+		postMessage({
+			spinId: id,
+			spinDestroyed: state
+		});
+	};
+	
+	spinSocket.on('spin-store', onStore);
+	spinSocket.on('spin-created', onCreated);
+	spinSocket.on('spin-update', onUpdate);
+	spinSocket.on('spin-destroyed', onDestroyed);
+	
+	spinSocket.on('disconnect', function() {
+		spinSocket.off('spin-store', onStore);
+		spinSocket.off('spin-created', onCreated);
+		spinSocket.off('spin-update', onUpdate);
+		spinSocket.off('spin-destroyed', onDestroyed);
+		//isSocketConnected = false;
+	});
+}
 
+
+// content script or Popup port
 function onConnectListener(port) {
 	console.log('onConnect', port);
 	
 	//onsole.assert(port.name == "knockknock");
-	contentPort = port;
+	// contentPort = port;
 	
+	//contentPort = port;
 	
 	
 	function onMessageListener(msg) {
 		
 		console.log('onMessage YY', msg);
 		
-		if (msg.connectExtension) {
-			connect((socket) => {
-				console.log('connected socket');
-				//sendResponse({connectedExtension: true});
-				contentPort.postMessage({connectedExtension: true});
-			}, (socket) => {
-				console.log('diconnected socket');
-				
+		if (msg.disconnectSocket) {
+			console.log('got disconnectSocket');
+			
+			disconnect(() => {
+				//const d = getPopupState();
+				console.log('disconnectSocket.postMessage');
+				//port.postMessage(d);
 			});
+			
+			return;
+		}
+		if (msg.connectSocket) {
+			console.log('got connectSocket');
+			
+			//sendResponse(getPopupState());
+			
+			connect((socket) => {
+				
+				const d = getPopupState();
+				console.log('port.postMessage 1', d);
+				port.postMessage(d);
+				
+				
+				
+				socket.on('disconnect', () => {
+					const d = getPopupState();
+					console.log('port.postMessage 2', d);
+					port.postMessage(d);
+				});
+				
+				socket.once('spin-store', function(data) {
+					const store = JSON.parse(data);
+					port.postMessage({
+						spinStore: store
+					});
+					
+					// listenSpinSocket(function(msg) {
+					// 	port.postMessage(msg);
+					// });
+				});
+				socket.emit('get-spin-store');
+			});
+			
+			return;
+		}
+		if (msg.connectExtension) {
+			// connect((socket) => {
+			// 	console.log('connected socket');
+			// 	//sendResponse({connectedExtension: true});
+			// 	contentPort.postMessage({connectedExtension: true});
+			// }, (socket) => {
+			// 	console.log('diconnected socket');
+			//
+			// });
 			//port.postMessage({connectedExtension: true});
 		}
 		// else if (msg.connect) {
@@ -153,13 +226,68 @@ function onConnectListener(port) {
 }
 
 chrome.runtime.onConnect.addListener(onConnectListener);
+
 // chrome.runtime.onDisconnect.addListener(() => {
 // 	chrome.runtime.onConnect.removeListener(onConnectListener);
 // 	contentPort = null;
 // });
 
+function connectSocket(callback) {
+	connect((socket) => {
+		console.log('connected socket');
+		//sendResponse({connectedExtension: true});
+		// contentPort.postMessage({connectedExtension: true});
+		
+		callback();
+	}, (socket) => {
+		console.log('diconnected socket');
+		// sendResponse({
+		// 	socketDisconnected: true
+		// });
+	}, (msg) => {
+		console.log('send to active tab', msg);
+		
+		//sendMessageActiveTab(msg);
+	});
+}
+
+function getPopupState(spinStore) {
+	return {
+		isSocketConnected,
+		spinStore
+	}
+}
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+	
+	if (request.connectSocket) {
+		connectSocket(() => {
+			console.log('connectSocket callback')
+			const d = {
+				socketConnected: true
+			};
+			console.log('connectSocket!!!!!!!!!!!!!!!!! sendResponse', d, sender, sendResponse);
+			sendResponse(d);
+		});
+		return;
+	}
+	if (request.getPopupState) {
+		console.log('request.getPopupState isSocketConnected='+isSocketConnected);
+		sendResponse(getPopupState());
+		// if (isSocketConnected) {
+		// 	spinSocket.once('spin-store', function(data) {
+		// 		let store = JSON.parse(data);
+		// 		sendResponse(getPopupState(store));
+		// 	});
+		// 	spinSocket.emit('get-spin-store');
+		// 	//sendResponse(getPopupState());
+		// }
+		// else {
+		// 	sendResponse(getPopupState());
+		// }
+		return;
+	}
+	
 	console.log('BG', sender.tab ?
 		"from a content script:" + sender.tab.url :
 		"from the extension");
