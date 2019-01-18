@@ -42,7 +42,14 @@
 // 	sendResponse({contentScriptResponse: "content says hello"});
 // });
 
-var bgPort;
+var bgPort = null;
+
+function disconnectExtension() {
+	if (bgPort) {
+		bgPort.disconnect();
+		bgPort = undefined;
+	}
+}
 
 function connectExtension() {
 	console.log('content sending connectExtension to background');
@@ -51,12 +58,22 @@ function connectExtension() {
 		name:"port-from-cs"
 	});
 	
+	bgPort.onDisconnect.addListener(function() {
+		console.log('console port onDisconnect');
+		window.postMessage({
+			connectedExtension: false,
+		}, "*");
+	});
+	
 	bgPort.onMessage.addListener(function(msg) {
 		console.log("content received from bg", msg);
 		
 		if (msg.connectedExtension) {
-			console.log('GOT it');
-			alert('connectedExtension');
+			
+			window.postMessage({
+				// isSocketConnected: !!msg.isSocketConnected,
+				connectedExtension: !!msg.connectedExtension,
+			}, "*");
 		}
 		
 		if (msg.spinStore) {
@@ -91,7 +108,12 @@ window.addEventListener("message", function(event) {
 		return;
 	}
 	
-	if (event.data.connectExtension) {
+	if (event.data.disconnectExtension) {
+		console.log('content got connectExtension');
+		disconnectExtension();
+	}
+	else if (event.data.connectExtension) {
+		console.log('content got connectExtension');
 		connectExtension();
 		
 		//alert('connectExtension1');

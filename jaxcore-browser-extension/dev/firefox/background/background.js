@@ -6240,6 +6240,319 @@ module.exports = {
 
 /***/ }),
 
+/***/ "./node_modules/events/events.js":
+/*!***************************************!*\
+  !*** ./node_modules/events/events.js ***!
+  \***************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+function EventEmitter() {
+  this._events = this._events || {};
+  this._maxListeners = this._maxListeners || undefined;
+}
+module.exports = EventEmitter;
+
+// Backwards-compat with node 0.10.x
+EventEmitter.EventEmitter = EventEmitter;
+
+EventEmitter.prototype._events = undefined;
+EventEmitter.prototype._maxListeners = undefined;
+
+// By default EventEmitters will print a warning if more than 10 listeners are
+// added to it. This is a useful default which helps finding memory leaks.
+EventEmitter.defaultMaxListeners = 10;
+
+// Obviously not all Emitters should be limited to 10. This function allows
+// that to be increased. Set to zero for unlimited.
+EventEmitter.prototype.setMaxListeners = function(n) {
+  if (!isNumber(n) || n < 0 || isNaN(n))
+    throw TypeError('n must be a positive number');
+  this._maxListeners = n;
+  return this;
+};
+
+EventEmitter.prototype.emit = function(type) {
+  var er, handler, len, args, i, listeners;
+
+  if (!this._events)
+    this._events = {};
+
+  // If there is no 'error' event listener then throw.
+  if (type === 'error') {
+    if (!this._events.error ||
+        (isObject(this._events.error) && !this._events.error.length)) {
+      er = arguments[1];
+      if (er instanceof Error) {
+        throw er; // Unhandled 'error' event
+      } else {
+        // At least give some kind of context to the user
+        var err = new Error('Uncaught, unspecified "error" event. (' + er + ')');
+        err.context = er;
+        throw err;
+      }
+    }
+  }
+
+  handler = this._events[type];
+
+  if (isUndefined(handler))
+    return false;
+
+  if (isFunction(handler)) {
+    switch (arguments.length) {
+      // fast cases
+      case 1:
+        handler.call(this);
+        break;
+      case 2:
+        handler.call(this, arguments[1]);
+        break;
+      case 3:
+        handler.call(this, arguments[1], arguments[2]);
+        break;
+      // slower
+      default:
+        args = Array.prototype.slice.call(arguments, 1);
+        handler.apply(this, args);
+    }
+  } else if (isObject(handler)) {
+    args = Array.prototype.slice.call(arguments, 1);
+    listeners = handler.slice();
+    len = listeners.length;
+    for (i = 0; i < len; i++)
+      listeners[i].apply(this, args);
+  }
+
+  return true;
+};
+
+EventEmitter.prototype.addListener = function(type, listener) {
+  var m;
+
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  if (!this._events)
+    this._events = {};
+
+  // To avoid recursion in the case that type === "newListener"! Before
+  // adding it to the listeners, first emit "newListener".
+  if (this._events.newListener)
+    this.emit('newListener', type,
+              isFunction(listener.listener) ?
+              listener.listener : listener);
+
+  if (!this._events[type])
+    // Optimize the case of one listener. Don't need the extra array object.
+    this._events[type] = listener;
+  else if (isObject(this._events[type]))
+    // If we've already got an array, just append.
+    this._events[type].push(listener);
+  else
+    // Adding the second element, need to change to array.
+    this._events[type] = [this._events[type], listener];
+
+  // Check for listener leak
+  if (isObject(this._events[type]) && !this._events[type].warned) {
+    if (!isUndefined(this._maxListeners)) {
+      m = this._maxListeners;
+    } else {
+      m = EventEmitter.defaultMaxListeners;
+    }
+
+    if (m && m > 0 && this._events[type].length > m) {
+      this._events[type].warned = true;
+      console.error('(node) warning: possible EventEmitter memory ' +
+                    'leak detected. %d listeners added. ' +
+                    'Use emitter.setMaxListeners() to increase limit.',
+                    this._events[type].length);
+      if (typeof console.trace === 'function') {
+        // not supported in IE 10
+        console.trace();
+      }
+    }
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.on = EventEmitter.prototype.addListener;
+
+EventEmitter.prototype.once = function(type, listener) {
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  var fired = false;
+
+  function g() {
+    this.removeListener(type, g);
+
+    if (!fired) {
+      fired = true;
+      listener.apply(this, arguments);
+    }
+  }
+
+  g.listener = listener;
+  this.on(type, g);
+
+  return this;
+};
+
+// emits a 'removeListener' event iff the listener was removed
+EventEmitter.prototype.removeListener = function(type, listener) {
+  var list, position, length, i;
+
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  if (!this._events || !this._events[type])
+    return this;
+
+  list = this._events[type];
+  length = list.length;
+  position = -1;
+
+  if (list === listener ||
+      (isFunction(list.listener) && list.listener === listener)) {
+    delete this._events[type];
+    if (this._events.removeListener)
+      this.emit('removeListener', type, listener);
+
+  } else if (isObject(list)) {
+    for (i = length; i-- > 0;) {
+      if (list[i] === listener ||
+          (list[i].listener && list[i].listener === listener)) {
+        position = i;
+        break;
+      }
+    }
+
+    if (position < 0)
+      return this;
+
+    if (list.length === 1) {
+      list.length = 0;
+      delete this._events[type];
+    } else {
+      list.splice(position, 1);
+    }
+
+    if (this._events.removeListener)
+      this.emit('removeListener', type, listener);
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.removeAllListeners = function(type) {
+  var key, listeners;
+
+  if (!this._events)
+    return this;
+
+  // not listening for removeListener, no need to emit
+  if (!this._events.removeListener) {
+    if (arguments.length === 0)
+      this._events = {};
+    else if (this._events[type])
+      delete this._events[type];
+    return this;
+  }
+
+  // emit removeListener for all listeners on all events
+  if (arguments.length === 0) {
+    for (key in this._events) {
+      if (key === 'removeListener') continue;
+      this.removeAllListeners(key);
+    }
+    this.removeAllListeners('removeListener');
+    this._events = {};
+    return this;
+  }
+
+  listeners = this._events[type];
+
+  if (isFunction(listeners)) {
+    this.removeListener(type, listeners);
+  } else if (listeners) {
+    // LIFO order
+    while (listeners.length)
+      this.removeListener(type, listeners[listeners.length - 1]);
+  }
+  delete this._events[type];
+
+  return this;
+};
+
+EventEmitter.prototype.listeners = function(type) {
+  var ret;
+  if (!this._events || !this._events[type])
+    ret = [];
+  else if (isFunction(this._events[type]))
+    ret = [this._events[type]];
+  else
+    ret = this._events[type].slice();
+  return ret;
+};
+
+EventEmitter.prototype.listenerCount = function(type) {
+  if (this._events) {
+    var evlistener = this._events[type];
+
+    if (isFunction(evlistener))
+      return 1;
+    else if (evlistener)
+      return evlistener.length;
+  }
+  return 0;
+};
+
+EventEmitter.listenerCount = function(emitter, type) {
+  return emitter.listenerCount(type);
+};
+
+function isFunction(arg) {
+  return typeof arg === 'function';
+}
+
+function isNumber(arg) {
+  return typeof arg === 'number';
+}
+
+function isObject(arg) {
+  return typeof arg === 'object' && arg !== null;
+}
+
+function isUndefined(arg) {
+  return arg === void 0;
+}
+
+
+/***/ }),
+
 /***/ "./node_modules/has-binary2/index.js":
 /*!*******************************************!*\
   !*** ./node_modules/has-binary2/index.js ***!
@@ -8978,60 +9291,97 @@ module.exports = yeast;
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var socket_io_client__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! socket.io-client */ "./node_modules/socket.io-client/lib/index.js");
 /* harmony import */ var socket_io_client__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(socket_io_client__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var events__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! events */ "./node_modules/events/events.js");
+/* harmony import */ var events__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(events__WEBPACK_IMPORTED_MODULE_1__);
 
-var isSocketConnected = false;
-var spinSocket;
-var contentPort;
 
-function disconnect(callback) {
-  if (spinSocket) {
-    spinSocket.on('disconnect', function () {
-      console.log('Socket disconnect() callback');
-      callback();
-    });
-    spinSocket.disconnect();
-  } else callback();
-}
+var activeTabId = null; // var isSocketConnected = false;
+// // var spinSocket;
+// // var contentPort;
+// var spinStore;
+// const spinSocketListener = new EventEmitter();
+//
+// function disconnectSocket(socket, callback) {
+//
+// 	if (socket) {
+//
+// 		isSocketConnected = false;
+// 		socket.on('disconnect', () => {
+//
+// 			spinSocketListener.emit('disconnect', spinSocket);
+//
+// 			console.log('Socket disconnect() callback');
+// 			callback();
+// 		});
+// 		socket.disconnect();
+// 	}
+// 	else callback();
+// }
 
-function connect(onConnect, onDisconnect, postMessage) {
-  if (isSocketConnected) {
-    console.log('already connected');
-    onConnect(spinSocket);
-    return;
-  }
-
-  var port = 37524;
-  console.log('connecting port ' + port + ' ...');
+function connectPortSocket(port, onConnect, onDisconnect) {
+  var socketPort = 37524;
+  console.log('connecting port ' + socketPort + ' ...');
   /* Connects to the socket server */
 
-  spinSocket = socket_io_client__WEBPACK_IMPORTED_MODULE_0___default.a.connect('http://localhost:' + port);
-  var socket = spinSocket;
+  var socket = socket_io_client__WEBPACK_IMPORTED_MODULE_0___default.a.connect('http://localhost:' + socketPort);
+
+  var onStore = function onStore(store) {
+    console.log('BG GOT spin-store', store);
+    port.postMessage({
+      spinStore: store
+    });
+  };
+
+  var onCreated = function onCreated(id, state) {
+    console.log('BG GOT spin-created', state);
+    port.postMessage({
+      spinId: id,
+      spinCreated: state
+    });
+  };
+
+  var onUpdate = function onUpdate(id, state) {
+    console.log('BG GOT spin-update', state);
+    port.postMessage({
+      spinId: id,
+      spinUpdate: state
+    });
+  };
+
+  var onDestroyed = function onDestroyed(id, state) {
+    console.log('BG GOT spin-destroyed', state);
+    port.postMessage({
+      spinId: id,
+      spinDestroyed: state
+    });
+  };
+
   socket.on('connect', function () {
-    isSocketConnected = true;
-    console.log('Socket connected'); //alert('connected');
+    // isSocketConnected = true;
+    console.log('Socket connected'); // spinSocketListener.emit('connect', socket);
+    // console.log('emit get-spin-store');
+    // socket.emit('get-spin-store');
 
-    console.log('emit hello');
-    socket.emit({
-      background: 'hello'
-    }); // var c = 0;
-    // setInterval(function() {
-    // 	console.log('emit spin');
-    // 	socket.emit({
-    // 		spin: -1
-    // 	});
-    // }, 3000);
-
+    socket.on('spin-store', onStore);
+    socket.on('spin-created', onCreated);
+    socket.on('spin-update', onUpdate);
+    socket.on('spin-destroyed', onDestroyed);
     onConnect(socket);
   });
   socket.on('disconnect', function () {
-    console.log('Socket disconnected'); // onDisconnect(socket);
-
-    isSocketConnected = false;
-    spinSocket = null;
+    console.log('Socket disconnected');
+    socket.removeListener('spin-store', onStore);
+    socket.removeListener('spin-created', onCreated);
+    socket.removeListener('spin-update', onUpdate);
+    socket.removeListener('spin-destroyed', onDestroyed);
+    socket.removeAllListeners('connect');
+    socket.removeAllListeners('disconnect');
+    onDisconnect();
   });
-}
-
-var connectingSocket = false; // function connectSocket() {
+  console.log('emit get-spin-store 1');
+  socket.emit('get-spin-store');
+} // var connectingSocket = false;
+// function connectSocket() {
 // 	if (connectingSocket) return;
 // 	connectingSocket = true;
 // 	connect(() => {
@@ -9041,193 +9391,187 @@ var connectingSocket = false; // function connectSocket() {
 // 		console.log('diconnected socket');
 // 	});
 // }
+// function listenSpinSocket(callback, postMessage, onDisconnect) {
+// 	if (!spinSocket) {
+// 		console.log('no spin socket');
+// 		return;
+// 	}
+//
+// 	const onStore = (store) => {
+// 		console.log('BG GOT spin-store', store);
+// 		postMessage({
+// 			spinStore: store
+// 		});
+// 	};
+// 	const onCreated = (id, state) => {
+// 		console.log('BG GOT spin-created', state);
+// 		postMessage({
+// 			spinId: id,
+// 			spinCreated: state
+// 		});
+// 	};
+// 	const onUpdate = (id, state) => {
+// 		console.log('BG GOT spin-update', state);
+// 		postMessage({
+// 			spinId: id,
+// 			spinUpdate: state
+// 		});
+// 	};
+// 	const onDestroyed = (id, state) => {
+// 		console.log('BG GOT spin-destroyed', state);
+// 		postMessage({
+// 			spinId: id,
+// 			spinDestroyed: state
+// 		});
+// 	};
+//
+// 	spinSocket.on('spin-store', onStore);
+// 	spinSocket.on('spin-created', onCreated);
+// 	spinSocket.on('spin-update', onUpdate);
+// 	spinSocket.on('spin-destroyed', onDestroyed);
+//
+// 	const onDis = function() {
+//
+// 		console.log('DISCSSSSSCONNECCCCTTTTTT');
+// 		debugger;
+//
+// 		spinSocket.removeListener('spin-store', onStore);
+// 		spinSocket.removeListener('spin-created', onCreated);
+// 		spinSocket.removeListener('spin-update', onUpdate);
+// 		spinSocket.removeListener('spin-destroyed', onDestroyed);
+// 		//isSocketConnected = false;
+//
+// 		spinSocket.removeListener(onDis);
+//
+// 		onDisconnect();
+// 	};
+//
+// 	spinSocket.on('disconnect', onDis);
+//
+// 	callback(onDis);
+// }
 
-function listenSpinSocket(postMessage) {
-  if (!spinSocket) {
-    console.log('no spin socket');
-    return;
-  }
 
-  var onStore = function onStore(store) {
-    console.log('BG GOT spin-store', store);
-    postMessage({
-      spinStore: store
-    });
-  };
-
-  var onCreated = function onCreated(id, state) {
-    console.log('BG GOT spin-created', state);
-    postMessage({
-      spinId: id,
-      spinCreated: state
-    });
-  };
-
-  var onUpdate = function onUpdate(id, state) {
-    console.log('BG GOT spin-update', state);
-    postMessage({
-      spinId: id,
-      spinUpdate: state
-    });
-  };
-
-  var onDestroyed = function onDestroyed(id, state) {
-    console.log('BG GOT spin-destroyed', state);
-    postMessage({
-      spinId: id,
-      spinDestroyed: state
-    });
-  };
-
-  spinSocket.on('spin-store', onStore);
-  spinSocket.on('spin-created', onCreated);
-  spinSocket.on('spin-update', onUpdate);
-  spinSocket.on('spin-destroyed', onDestroyed);
-  spinSocket.on('disconnect', function () {
-    spinSocket.off('spin-store', onStore);
-    spinSocket.off('spin-created', onCreated);
-    spinSocket.off('spin-update', onUpdate);
-    spinSocket.off('spin-destroyed', onDestroyed); //isSocketConnected = false;
-  });
-} // content script or Popup port
-
-
-function onConnectListener(port) {
-  console.log('onConnect', port); //onsole.assert(port.name == "knockknock");
-  // contentPort = port;
-  //contentPort = port;
+function onPortConnect(port) {
+  console.log('onPortConnect', port);
 
   function onMessageListener(msg) {
-    console.log('onMessage YY', msg);
+    console.log('onMessageListener', msg);
 
-    if (msg.disconnectSocket) {
-      console.log('got disconnectSocket');
-      disconnect(function () {
-        //const d = getPopupState();
-        console.log('disconnectSocket.postMessage'); //port.postMessage(d);
-      });
-      return;
-    }
+    if (msg.connectExtension) {
+      console.log('BG received from content: connectExtension');
+      connectPortSocket(port, function (socket) {
+        console.log('port socket connected');
 
-    if (msg.connectSocket) {
-      console.log('got connectSocket'); //sendResponse(getPopupState());
+        var _dis = function _dis(event) {
+          console.log('destroy socket');
+          socket.destroy();
+          port.onDisconnect.removeListener(_dis);
+        };
 
-      connect(function (socket) {
-        var d = getPopupState();
-        console.log('port.postMessage 1', d);
-        port.postMessage(d);
-        socket.on('disconnect', function () {
-          var d = getPopupState();
-          console.log('port.postMessage 2', d);
-          port.postMessage(d);
-        });
-        socket.once('spin-store', function (data) {
-          var store = JSON.parse(data);
-          port.postMessage({
-            spinStore: store
-          }); // listenSpinSocket(function(msg) {
-          // 	port.postMessage(msg);
-          // });
-        });
-        socket.emit('get-spin-store');
-      });
-      return;
-    }
-
-    if (msg.connectExtension) {} // connect((socket) => {
-    // 	console.log('connected socket');
-    // 	//sendResponse({connectedExtension: true});
-    // 	contentPort.postMessage({connectedExtension: true});
-    // }, (socket) => {
-    // 	console.log('diconnected socket');
-    //
-    // });
-    //port.postMessage({connectedExtension: true});
-    // else if (msg.connect) {
-    // 	port.postMessage({connected: true});
-    // }
-    else {
+        port.onDisconnect.addListener(_dis);
         port.postMessage({
-          blah: true
+          connectedExtension: true
         });
-        sendMessageActiveTab({
-          oops: true
+      }, function () {
+        console.log('port socket disconnected');
+        port.postMessage({
+          connectedExtension: false
         });
-      } //
-    //
-    // 	// if (msg.joke == "Knock knock")
-    // 	// 	port.postMessage({question: "Who's there?"});
-    // 	// else if (msg.answer == "Madame")
-    // 	// 	port.postMessage({question: "Madame who?"});
-    // 	// else if (msg.answer == "Madame... Bovary")
-    // 	// 	port.postMessage({question: "I don't get it."});
-    // 	// else {
-    // 	// 	console.log('nopers', msg);
-    // 	// }
-
+        port.disconnect();
+      });
+    } else {
+      console.log('unhandled message', msg);
+    }
   }
 
   port.onMessage.addListener(onMessageListener);
   port.onDisconnect.addListener(function (event) {
     console.log('port.onDisconnect ----------------');
-    chrome.runtime.onConnect.removeListener(onConnectListener);
-    port.onMessage.removeListener(onMessageListener); //contentPort = null;
+    port.onMessage.removeListener(onMessageListener);
   });
 }
 
-chrome.runtime.onConnect.addListener(onConnectListener); // chrome.runtime.onDisconnect.addListener(() => {
-// 	chrome.runtime.onConnect.removeListener(onConnectListener);
-// 	contentPort = null;
-// });
+chrome.runtime.onConnect.addListener(onPortConnect);
+chrome.runtime.onMessage.addListener(function (request, sender, _sendResponse) {
+  var sendResponse = _sendResponse; // POPUP
 
-function connectSocket(callback) {
-  connect(function (socket) {
-    console.log('connected socket'); //sendResponse({connectedExtension: true});
-    // contentPort.postMessage({connectedExtension: true});
+  if (!sender.tab || !sender.tab.url) {
+    if (request.doDisconnectSocket) {
+      disconnectSocket(function () {
+        console.log('connectSocket callback');
+        var d = {
+          isSocketConnected: isSocketConnected
+        };
+        console.log('disconnectSocket sendResponse', d, sender, sendResponse);
+        sendResponse(d);
+      });
+      return;
+    }
 
-    callback();
-  }, function (socket) {
-    console.log('diconnected socket'); // sendResponse({
-    // 	socketDisconnected: true
-    // });
-  }, function (msg) {
-    console.log('send to active tab', msg); //sendMessageActiveTab(msg);
-  });
-}
+    if (request.doConnectSocket) {
+      console.log('request.connectSocket', sender, sendResponse);
+      connectSocket(function () {
+        var d = {
+          isSocketConnected: isSocketConnected
+        };
+        console.log('connectSocket callback', d);
+        sendResponse(d);
+      });
+      return;
+    }
 
-function getPopupState(spinStore) {
-  return {
-    isSocketConnected: isSocketConnected,
-    spinStore: spinStore
-  };
-}
+    if (request.getSpinStore) {
+      //if (spinStore) {
+      sendResponse({
+        isSocketConnected: isSocketConnected,
+        spinStore: spinStore
+      }); // spinSocket.once('spin-store', function (data) {
+      // 	const store = JSON.parse(data);
+      // 	spinStore = store;
+      // 	sendResponse({
+      // 		isSocketConnected,
+      // 		spinStore: store
+      // 	});
+      // 	// listenSpinSocket(function(msg) {
+      // 	// 	port.postMessage(msg);
+      // 	// });
+      // });
+      // console.log('msg.getSpinState emit get-spin-store');
+      // spinSocket.emit('get-spin-store');
+      // } else {
+      // 	sendResponse({
+      // 		error: 'no-spin-socket'
+      // 	});
+      // }
 
-chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-  if (request.connectSocket) {
-    connectSocket(function () {
-      console.log('connectSocket callback');
-      var d = {
-        socketConnected: true
-      };
-      console.log('connectSocket!!!!!!!!!!!!!!!!! sendResponse', d, sender, sendResponse);
-      sendResponse(d);
-    });
-    return;
-  }
+      return;
+    }
 
-  if (request.getPopupState) {
-    console.log('request.getPopupState isSocketConnected=' + isSocketConnected);
-    sendResponse(getPopupState()); // if (isSocketConnected) {
-    // 	spinSocket.once('spin-store', function(data) {
-    // 		let store = JSON.parse(data);
-    // 		sendResponse(getPopupState(store));
-    // 	});
-    // 	spinSocket.emit('get-spin-store');
-    // 	//sendResponse(getPopupState());
-    // }
-    // else {
-    // 	sendResponse(getPopupState());
-    // }
+    if (request.getSocketState) {
+      console.log('request.getPopupState isSocketConnected=' + isSocketConnected);
+      sendResponse({
+        isSocketConnected: isSocketConnected
+      }); // if (isSocketConnected) {
+      // 	if (spinSocket) {
+      // 		console.log('emit get-spin-store');
+      // 		spinSocket.emit('get-spin-store');
+      // 	}
+      // }
+      // if (isSocketConnected) {
+      // 	spinSocket.once('spin-store', function(data) {
+      // 		let store = JSON.parse(data);
+      // 		sendResponse(getPopupState(store));
+      // 	});
+      // 	spinSocket.emit('get-spin-store');
+      // 	//sendResponse(getPopupState());
+      // }
+      // else {
+      // 	sendResponse(getPopupState());
+      // }
+
+      return;
+    }
 
     return;
   }
@@ -9251,6 +9595,21 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     });
   }
 });
+
+function queryActiveTab() {
+  chrome.tabs.query({
+    active: true,
+    currentWindow: true
+  }, function (tabs) {
+    if (tabs.length) {
+      if (activeTabId != tabs[0].id) {
+        activeTabId = tabs[0].id;
+      }
+    }
+  });
+}
+
+setInterval(queryActiveTab, 1000);
 
 function sendMessageActiveTab(msg) {
   chrome.tabs.query({

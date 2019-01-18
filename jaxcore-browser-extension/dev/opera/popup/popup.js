@@ -24253,26 +24253,9 @@ function (_Component) {
     value: function componentDidMount() {
       var _this2 = this;
 
-      setTimeout(function () {
-        chrome.runtime.sendMessage({
-          getPopupState: true
-        }, function (response) {
-          console.log('popup response', response);
-
-          if (response) {
-            _this2.setState({
-              isSocketConnected: response.isSocketConnected,
-              loading: false
-            }); //if (response.isSocketConnected) {
-
-
-            _this2.connect(); //}
-
-          } else {
-            debugger;
-          }
-        });
-      }, 1000);
+      this.getSocketState(function () {
+        _this2.getSpinStore();
+      });
     }
   }, {
     key: "render",
@@ -24293,34 +24276,144 @@ function (_Component) {
       if (this.state.loading) {
         return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
           id: "popupcontainer"
-        }, "loading...", react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", null, "Port: ", this.state.isPortConnected.toString(), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("br", null), "Socket: ", this.state.isSocketConnected.toString(), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("br", null), "connecting: ", this.state.connecting.toString()));
+        }, "loading...");
       } else {
         return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
           id: "popupcontainer"
-        }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("button", {
-          disabled: this.state.connecting,
+        }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", null, "Desktop App:", react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("button", {
           onClick: function onClick(e) {
-            return _this3.toggleConnect();
+            return _this3.toggleConnectSocket();
           }
-        }, this.getConnectLabel()), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", null, "Port: ", this.state.isPortConnected.toString(), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("br", null), "Server: ", this.state.isSocketConnected.toString(), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("br", null), "connecting: ", this.state.connecting.toString()), this.renderSpins());
+        }, this.getConnectSocketLabel())), this.renderSpins());
       }
+    }
+  }, {
+    key: "getSocketState",
+    value: function getSocketState(cb) {
+      var _this4 = this;
+
+      chrome.runtime.sendMessage({
+        getSocketState: true
+      }, function (response) {
+        console.log('getSocketState response', response);
+
+        if (response) {
+          _this4.setState({
+            isSocketConnected: response.isSocketConnected,
+            loading: false
+          });
+
+          if (cb) cb(); // if (response.isSocketConnected) {
+          // 	this.getSpinState();
+          // }
+        } else {
+          debugger;
+        }
+      });
+    }
+  }, {
+    key: "toggleConnectSocket",
+    value: function toggleConnectSocket() {
+      console.log('toggleConnectSocket');
+
+      if (this.state.isSocketConnected) {
+        this.sendSocketDisonnect();
+      } else {
+        this.sendSocketConnect();
+      }
+    }
+  }, {
+    key: "sendSocketConnect",
+    value: function sendSocketConnect() {
+      var _this5 = this;
+
+      chrome.runtime.sendMessage({
+        doConnectSocket: true
+      }, function (response) {
+        console.log('doConnectSocket response', response);
+
+        if (response) {
+          _this5.setState({
+            isSocketConnected: response.isSocketConnected
+          });
+
+          debugger;
+        } else {
+          debugger;
+          setTimeout(function () {
+            _this5.getSpinStore();
+          }, 1000);
+        }
+      }); // chrome.runtime.sendMessage({connectSocket: true}, (response) => {
+      // 	if (!response) {
+      // 		console.log('sendSocketConnect');
+      // 		debugger;
+      // 		return;
+      // 	}
+      // 	console.log('sendSocketConnect response', response);
+      // 	debugger;
+      // 	this.setState({
+      // 		isSocketConnected: response.isSocketConnected
+      // 	});
+      // });
+    }
+  }, {
+    key: "sendSocketDisonnect",
+    value: function sendSocketDisonnect() {
+      var _this6 = this;
+
+      console.log('sendSocketDisonnect');
+      chrome.runtime.sendMessage({
+        doDisconnectSocket: true
+      }, function (response) {
+        console.log('sendSocketConnect response', response);
+        debugger;
+
+        _this6.setState({
+          isSocketConnected: response.isSocketConnected,
+          spinStore: {}
+        });
+      });
+    }
+  }, {
+    key: "getSpinStore",
+    value: function getSpinStore() {
+      var _this7 = this;
+
+      chrome.runtime.sendMessage({
+        getSpinStore: true
+      }, function (response) {
+        console.log('getSpinStore response', response);
+
+        if (response) {
+          _this7.setState({
+            isSocketConnected: response.isSocketConnected,
+            spinStore: response.spinStore,
+            loading: false
+          });
+        } else {
+          debugger;
+        }
+      });
     }
   }, {
     key: "renderSpins",
     value: function renderSpins() {
-      var _this4 = this;
+      var _this8 = this;
 
       var ids = [];
-      if (!this.state.spinStore || !this.state.spinStore.ids) return;
+      if (!this.state.isSocketConnected || !this.state.spinStore) return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h3", null, "Not Connected"));
 
       var _loop = function _loop(id) {
         var handler = function handler(e) {
-          _this4.clickSpin(id);
+          e.preventDefault();
+
+          _this8.clickSpin(id);
         };
 
         ids.push(react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
           key: id
-        }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("a", {
+        }, "Spin: ", react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("a", {
           href: "/",
           onClick: handler
         }, id)));
@@ -24330,7 +24423,7 @@ function (_Component) {
         _loop(id);
       }
 
-      return ids;
+      return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h3", null, "Connected Devices:"), ids);
     }
   }, {
     key: "clickSpin",
@@ -24340,110 +24433,183 @@ function (_Component) {
       //</pre>
     }
   }, {
-    key: "toggleConnect",
-    value: function toggleConnect() {
-      if (this.state.connecting) return;
+    key: "getConnectSocketLabel",
+    value: function getConnectSocketLabel() {
+      // if (this.state.connecting) return 'Connecting...';
+      return this.state.isSocketConnected ? 'Disconnect' : 'Connect';
+    } //
+    //
+    // toggleConnectPort() {
+    // 	console.log('toggleConnectPort connecting=',this.state.connecting, 'isPortConnected', this.state.isPortConnected)
+    // 	if (this.state.isPortConnected) {
+    // 		this.disconnectPort();
+    // 	} else {
+    // 		this.connectPort();
+    // 	}
+    // }
+    //
+    //
+    //
+    //
+    // connectSocket() {
+    // 	if (this.bgPort) {
+    // 		console.log('new bg port postMessage({connectSocket: true})');
+    // 		this.bgPort.postMessage({connectSocket: true});
+    // 	} else {
+    // 		console.log('no port?');
+    // 		this.connectPort(() => {
+    // 			console.log('no port? connect socket');
+    // 			this.bgPort.postMessage({connectSocket: true});
+    // 		});
+    // 	}
+    // }
+    //
+    // disconnectSocket() {
+    // 	console.log('Socket disconnecting...');
+    // 	this.setState({
+    // 		connecting: false,
+    // 		isSocketConnected: false,
+    // 		spinStore: {}
+    // 	});
+    // 	if (this.bgPort) {
+    // 		this.bgPort.postMessage({disconnectSocket: true});
+    // 	}
+    // }
+    //
+    // disconnectPort() {
+    // 	console.log('Port disconnecting...');
+    // 	if (this.bgPort) this.bgPort.disconnect();
+    // 	this.setState({
+    // 		connecting: false,
+    // 		isPortConnected: false,
+    // 		//isSocketConnected: false,
+    // 		spinStore: {}
+    // 	});
+    // 	if (this.bgPort) {
+    // 		// this.bgPort.onMessage.removeListener(this._onMessage);
+    // 		// this.bgPort.onDisconnect.removeListener(this._onPortDisconnect);
+    // 		this.bgPort.disconnect();
+    // 	}
+    // 	delete this.bgPort;
+    // }
+    //
+    // connectPort(cb) {
+    // 	console.log('Port connecting...');
+    //
+    // 	this.setState({
+    // 		//isPortConnected: false,
+    // 		connecting: true
+    // 	});
+    //
+    // 	if (this.bgPort) {
+    // 		console.log('bg port exists');
+    // 		this.bgPort.postMessage({connectSocket: true});
+    // 		this.setState({
+    // 			isPortConnected: true,
+    // 			connecting: false
+    // 		});
+    // 		//this.disconnectPort();
+    // 	}
+    //
+    // 	if (true) {
+    //
+    //
+    // 		console.log('new bg port');
+    //
+    // 		this.bgPort = chrome.runtime.connect({
+    // 			name: "port-from-popup"
+    // 		});
+    //
+    // 		const onMessage = (msg) => {
+    // 			console.log("popup received from bg", msg);
+    //
+    // 			if (cb) {
+    // 				cb();
+    // 			}
+    //
+    // 			this.setState({
+    // 				isPortConnected: true,
+    // 				connecting: false,
+    // 				loading: false,
+    // 			});
+    //
+    // 			if ('isSocketConnected' in msg) {
+    // 				console.log('got \'isSocketConnected\' in msg');
+    // 				this.setState({
+    // 					isSocketConnected: msg.isSocketConnected,
+    // 				});
+    //
+    // 				if (msg.isSocketConnected) {
+    // 					console.log('sending getSpinState');
+    // 					this.bgPort.postMessage({getSpinState: true});
+    // 				}
+    // 			}
+    // 			if (msg.spinStore) {
+    // 				console.log('got spin store', msg.spinStore);
+    // 				this.setState({
+    // 					spinStore: msg.spinStore
+    // 				});
+    // 			}
+    // 		};
+    // 		this._onMessage = onMessage.bind(this);
+    //
+    // 		this.bgPort.onMessage.addListener(this._onMessage);
+    //
+    // 		const onPortDisconnect = function () {
+    // 			this.bgPort.onMessage.removeListener(this._onMessage);
+    //
+    // 			this.bgPort.onDisconnect.removeListener(this._onPortDisconnect);
+    //
+    // 			console.log('onPortDisconnect');
+    // 			this.setState({
+    // 				isPortConnected: false,
+    // 				connecting: false
+    // 			});
+    // 			debugger;
+    // 			delete this.bgPort;
+    // 		};
+    // 		// this._onPortDisconnect = onPortDisconnect.bind(this);
+    // 		// this.bgPort.onDisconnect.addListener(this._onPortDisconnect);
+    //
+    // 		console.log('sending getPopupState')
+    // 		this.bgPort.postMessage({getPopupState: true});
+    // 		// this.setState({
+    // 		// 	isPortConnected: true
+    //
+    // 		// });
+    // 	}
+    //
+    //
+    // 	// chrome.runtime.sendMessage({connectSocket: true},
+    // 	// 	(response) => {
+    // 	// 		console.log('response from bg', response);
+    // 	// 		if (response) {
+    // 	// 			if (response.isSocketConnected) {
+    // 	// 				this.setState({
+    // 	// 					isSocketConnected: true,
+    // 	// 					connecting: false
+    // 	// 				});
+    // 	// 				debugger;
+    // 	// 			} else {
+    // 	// 				debugger;
+    // 	// 			}
+    // 	// 		}
+    // 	//
+    // 	// 		//tabURL = response.navURL
+    // 	// 	});//callback will be invoked somewhere in the future
+    // }
+    //
+    // getConnectPortLabel() {
+    // 	// if (this.state.connecting) return 'Connecting...';
+    // 	return (this.state.isPortConnected) ? 'Disconnect' : 'Connect';
+    // }
+    //
+    // getConnectSocketLabel() {
+    // 	// if (this.state.connecting) return 'Connecting...';
+    // 	return (this.state.isSocketConnected) ? 'Disconnect' : 'Connect';
+    // }
+    //
 
-      if (this.state.isSocketConnected && this.state.isPortConnected) {
-        this.disconnect();
-      } else {
-        this.connect();
-      }
-    }
-  }, {
-    key: "disconnect",
-    value: function disconnect() {
-      console.log('disconnecting...');
-      this.setState({
-        connecting: false,
-        isSocketConnected: false,
-        isPortConnected: false,
-        spinStore: {}
-      });
-      this.bgPort.postMessage({
-        disconnectSocket: true
-      });
-    }
-  }, {
-    key: "connect",
-    value: function connect() {
-      var _this5 = this;
-
-      console.log('connecting...');
-      this.setState({
-        //isPortConnected: false,
-        connecting: true
-      });
-
-      if (this.bgPort) {
-        console.log('bg port exists');
-        this.bgPort.postMessage({
-          connectSocket: true
-        });
-        this.setState({
-          isPortConnected: true,
-          connecting: false
-        });
-      } else {
-        console.log('new bg port');
-        this.bgPort = chrome.runtime.connect({
-          name: "port-from-popup"
-        });
-
-        var onMessage = function onMessage(msg) {
-          console.log("popup received from bg", msg);
-
-          if ('isSocketConnected' in msg) {
-            _this5.setState({
-              isSocketConnected: msg.isSocketConnected,
-              isPortConnected: true,
-              loading: false,
-              connecting: false
-            });
-          }
-
-          if (msg.spinStore) {
-            console.log('got spin store', msg.spinStore);
-
-            _this5.setState({
-              spinStore: msg.spinStore
-            });
-          }
-        };
-
-        this._onMessage = onMessage.bind(this);
-        this.bgPort.onMessage.addListener(this._onMessage);
-        console.log('new bg port postMessage({connectSocket: true})');
-        this.bgPort.postMessage({
-          connectSocket: true
-        }); // this.setState({
-        // 	isPortConnected: true
-        // });
-      } // chrome.runtime.sendMessage({connectSocket: true},
-      // 	(response) => {
-      // 		console.log('response from bg', response);
-      // 		if (response) {
-      // 			if (response.isSocketConnected) {
-      // 				this.setState({
-      // 					isSocketConnected: true,
-      // 					connecting: false
-      // 				});
-      // 				debugger;
-      // 			} else {
-      // 				debugger;
-      // 			}
-      // 		}
-      //
-      // 		//tabURL = response.navURL
-      // 	});//callback will be invoked somewhere in the future
-
-    }
-  }, {
-    key: "getConnectLabel",
-    value: function getConnectLabel() {
-      if (this.state.connecting) return 'Connecting...';
-      return this.state.isSocketConnected && this.state.isPortConnected ? 'Disconnect' : 'Connect';
-    }
   }]);
 
   return Popup;

@@ -2,102 +2,135 @@ var express = require('express');
 var app = express();
 var http = require('http');
 
-
-var Spin = require('jaxcore-spin'); // outside this project use 'jaxcore-spin'
+var EventEmitter = require('events');
+var plugin = require('jaxcore-plugin');
+var log = plugin.createLogger('Browser Service');
 
 var socketServer = http.createServer(app);
 var io = require('socket.io')(socketServer);
 
-var port = 37524;
-// var port = 80;
+var Spin = require('jaxcore-spin');
 
+function BrowserService() {
+	this.constructor();
+	this._callSpinMethod = this.callSpinMethod.bind(this);
+	this._onDisconnect = this.onDisconnect.bind(this);
+}
 
-socketServer.listen(port, function () {
-	console.log('Socket server listening on : ' + port);
-});
+BrowserService.prototype = new EventEmitter();
+BrowserService.prototype.constructor = EventEmitter;
 
-Spin.connectAll(function (spin) {
+BrowserService.prototype.connect = function(config, callback) {
+	var me = this;
 	
-	console.log('connected', spin.id);
+	if (config.ids) {
+		this.validIds = config.ids;
+	}
+	else this.validIds = null;
 	
-	// spin.on('spin', function (direction, position) {
-	// 	console.log('spin', direction, position);
-	// });
-	//
-	// spin.on('knob', function (pushed) {
-	// 	console.log('knob', pushed);
-	// });
-	//
-	// spin.on('button', function (pushed) {
-	// 	console.log('button', pushed);
-	// });
-});
-
-
-
-
-
-
-
-io.on('connection', function (socket) {
-	console.log('Socket connection established');
+	io.on('connection', function (socket) {
+		log('Socket connection established');
+		
+		me.onConnect(socket);
+		
+	});
+	
+	socketServer.listen(config.port, function () {
+		log('Socket server listening on : ' + config.port);
+		
+		callback();
+	});
 	
 	
-	const spinCreate = (id, state) => {
-		console.log('SEND spin created', id, state);
+	const spinCreate = function(id, state) {
+		if (me.isValidId(id)) {
+			log('SEND spin created', id, state);
+			me.emit('spin-created', id, state);
+		}
+		else log('spinCreate invalid id', id);
+	};
+	const spinUpdate = function(id, state) {
+		if (me.isValidId(id)) {
+			log('SEND spin update', id, state);
+			me.emit('spin-update', id, state);
+		}
+		else log('spinUpdate invalid id', id);
+	};
+	const spinDestroy = function(id, state) {
+		if (me.isValidId(id)) {
+			log('SEND spin destroyed', id);
+			me.emit('spin-destroyed', id, state);
+		}
+		else log('spinDestroy invalid id', id);
+	};
+
+	Spin.store.addListener('created', spinCreate);
+	Spin.store.addListener('update', spinUpdate);
+	Spin.store.addListener('destroyed', spinDestroy);
+};
+
+BrowserService.prototype.isValidId = function(id) {
+	if (this.validIds) {
+		return this.validIds.indexOf(id) > -1;
+	}
+	else return true;
+};
+
+BrowserService.prototype.onConnect = function(socket) {
+	var me = this;
+	
+	socket.emit('spin-store', this.getSpinStore());
+	
+	socket._onCreated = function (id, state) {
 		socket.emit('spin-created', id, state);
 	};
-	const spinUpdate = (id, state) => {
-		console.log('SEND spin update', id, state);
+	socket._onUpdate = function (id, state) {
 		socket.emit('spin-update', id, state);
 	};
-	const spinDestroy = (id, state) => {
-		console.log('SEND spin destroyed', id);
+	socket._onDestroyed  = function (id, state) {
 		socket.emit('spin-destroyed', id, state);
 	};
 	
-	socket._onCreate = spinCreate;
-	socket._onUpdate = spinUpdate;
-	socket._spinDestroy = spinDestroy;
+	this.addListener('spin-created', socket._onCreated);
+	this.addListener('spin-update', socket._onUpdate);
+	this.addListener('spin-destroyed', socket._onDestroyed);
 	
-	Spin.store.addListener('created', socket._onCreate);
-	Spin.store.addListener('update', socket._onUpdate);
-	Spin.store.addListener('destroyed', socket._spinDestroy);
+	socket._onStore = function () {
+		socket.emit('spin-store',  me.getSpinStore());
+	};
+	socket.on('get-spin-store', socket._onStore);
 	
-	socket.on('disconnect', function () {
-		console.log('DISCONNECT', socket.request.session);
-		
-		// process.exit();
-		Spin.store.removeListener('created', socket._onCreate);
-		Spin.store.removeListener('update', socket._onUpdate);
-		Spin.store.removeListener('destroyed', socket._spinDestroy);
-	});
+	socket.on('spin', this._callSpinMethod);
+	socket.on('disconnect', this._onDisconnect);
+};
+
+BrowserService.prototype.onDisconnect = function (socket) {
+	log('socket DISCONNECT', socket.request.session);
 	
-	//socket.emit('spin-store', Spin.store);
+	this.removeListener('spin-created', socket._onCreated);
+	this.removeListener('spin-update', socket._onUpdate);
+	this.removeListener('spin-destroyed', socket._onDestroyed);
 	
-	// socket.emit('hello', {a: 1});
-	
-	socket.on('get-spin-store', function () {
-		const s = JSON.stringify(Spin.store);
-		console.log('get-spin-store', s);
-		socket.emit('spin-store', s);
-	});
-	
-	socket.on('data', function (raw) {
-		var data;
-		try {
-			data = JSON.parse(raw);
+	socket.off('spin', this._callSpinMethod);
+	socket.off('get-spin-store', socket._onStore);
+	socket.off('disconnect', this._onDisconnect);
+};
+
+BrowserService.prototype.getSpinStore = function() {
+	var store = {};
+	for (var id in Spin.ids) {
+		if (this.isValidId(id)) {
+			store[id] = Spin.store.ids[id];s
 		}
-		catch(e) {
-			console.log(e);
-		}
-		console.log('client data:', data);
-	});
-});
+	}
+	return store;
+};
 
 
 
-/* Create HTTP server for node application */
-// var server = http.createServer(app);
-/* Node application will be running on 3000 port */
-// server.listen(3200);
+BrowserService.prototype.callSpinMethod = function (id, method, args) {
+	var spin = Spins.ids[id];
+	spin[method].apply(spin, args);
+};
+
+module.exports = new BrowserService();
