@@ -14,7 +14,6 @@ var Spin = require('jaxcore-spin');
 function BrowserService() {
 	this.constructor();
 	this._callSpinMethod = this.callSpinMethod.bind(this);
-	this._onDisconnect = this.onDisconnect.bind(this);
 }
 
 BrowserService.prototype = new EventEmitter();
@@ -101,19 +100,19 @@ BrowserService.prototype.onConnect = function(socket) {
 	socket.on('get-spin-store', socket._onStore);
 	
 	socket.on('spin', this._callSpinMethod);
-	socket.on('disconnect', this._onDisconnect);
-};
-
-BrowserService.prototype.onDisconnect = function (socket) {
-	log('socket DISCONNECT', socket.request.session);
 	
-	this.removeListener('spin-created', socket._onCreated);
-	this.removeListener('spin-update', socket._onUpdate);
-	this.removeListener('spin-destroyed', socket._onDestroyed);
-	
-	socket.off('spin', this._callSpinMethod);
-	socket.off('get-spin-store', socket._onStore);
-	socket.off('disconnect', this._onDisconnect);
+	socket._onDisconnect = function() {
+		log('socket DISCONNECT', socket.request.session);
+		
+		me.removeListener('spin-created', socket._onCreated);
+		me.removeListener('spin-update', socket._onUpdate);
+		me.removeListener('spin-destroyed', socket._onDestroyed);
+		
+		socket.off('spin', this._callSpinMethod);
+		socket.off('get-spin-store', socket._onStore);
+		socket.off('disconnect', this._onDisconnect);
+	};
+	socket.on('disconnect', socket._onDisconnect);
 };
 
 BrowserService.prototype.getSpinStore = function() {
@@ -129,6 +128,7 @@ BrowserService.prototype.getSpinStore = function() {
 
 
 BrowserService.prototype.callSpinMethod = function (id, method, args) {
+	log('calling method', id, method, args);
 	var spin = Spins.ids[id];
 	spin[method].apply(spin, args);
 };
