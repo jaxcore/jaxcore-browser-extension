@@ -46,6 +46,12 @@ var bgPort = null;
 
 function disconnectExtension() {
 	if (bgPort) {
+		
+		console.log('content post socketDisconnected')
+		window.postMessage({
+			socketDisconnected: true
+		}, "*");
+		
 		bgPort.disconnect();
 		bgPort = undefined;
 	}
@@ -60,6 +66,7 @@ function connectExtension() {
 	
 	bgPort.onDisconnect.addListener(function() {
 		console.log('console port onDisconnect');
+		
 		window.postMessage({
 			connectedExtension: false,
 		}, "*");
@@ -104,12 +111,17 @@ function connectExtension() {
 window.addEventListener("message", function(event) {
 	// We only accept messages from ourselves
 	if (event.source != window || !event.isTrusted) {
-		console.log('NOOOOO');
+		console.log('!isTrusted');
 		return;
 	}
 	
+	if (event.data.socketDisconnected) {
+		console.log('content got socketDisconnected');
+		disconnectExtension();
+	}
+	
 	if (event.data.disconnectExtension) {
-		console.log('content got connectExtension');
+		console.log('content got disconnectExtension');
 		disconnectExtension();
 	}
 	else if (event.data.connectExtension) {
@@ -129,7 +141,4 @@ window.addEventListener("message", function(event) {
 		debugger;
 	}
 });
-
-global.HELLO = 1234;
-console.log('DUDE', global.DUDE);
 

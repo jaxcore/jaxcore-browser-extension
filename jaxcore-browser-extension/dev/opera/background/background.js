@@ -9323,7 +9323,9 @@ function connectPortSocket(port, onConnect, onDisconnect) {
   console.log('connecting port ' + socketPort + ' ...');
   /* Connects to the socket server */
 
-  var socket = socket_io_client__WEBPACK_IMPORTED_MODULE_0___default.a.connect('http://localhost:' + socketPort);
+  var socket = socket_io_client__WEBPACK_IMPORTED_MODULE_0___default.a.connect('http://localhost:' + socketPort, {
+    reconnection: true
+  });
 
   var onStore = function onStore(store) {
     console.log('BG GOT spin-store', store);
@@ -9357,8 +9359,11 @@ function connectPortSocket(port, onConnect, onDisconnect) {
   };
 
   socket.on('connect', function () {
-    // isSocketConnected = true;
-    console.log('Socket connected'); // spinSocketListener.emit('connect', socket);
+    socket._didConnect = true; // isSocketConnected = true;
+
+    console.log('Socket connected');
+    console.log('turn off reconnect');
+    socket.io.opts.reconnect = false; // spinSocketListener.emit('connect', socket);
     // console.log('emit get-spin-store');
     // socket.emit('get-spin-store');
 
@@ -9376,10 +9381,21 @@ function connectPortSocket(port, onConnect, onDisconnect) {
     socket.removeListener('spin-destroyed', onDestroyed);
     socket.removeAllListeners('connect');
     socket.removeAllListeners('disconnect');
-    onDisconnect();
-  });
-  console.log('emit get-spin-store 1');
-  socket.emit('get-spin-store');
+    console.log('socket disconnected, calling onDisconnect');
+    port.postMessage({
+      socketDisconnected: true
+    });
+    onDisconnect(); // if (socket._didConnect) {
+    //
+    // }
+    // else {
+    // 	console.log('socket reconnect manual');
+    // 	socket.connect(function() {
+    // 		console.log('manually reconnected');
+    // 	});
+    // }
+  }); // console.log('emit get-spin-store 1');
+  // socket.emit('get-spin-store');
 } // var connectingSocket = false;
 // function connectSocket() {
 // 	if (connectingSocket) return;

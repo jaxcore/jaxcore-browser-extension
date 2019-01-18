@@ -32,7 +32,9 @@ function connectPortSocket(port, onConnect, onDisconnect) {
 	console.log('connecting port ' + socketPort + ' ...');
 	
 	/* Connects to the socket server */
-	var socket = io.connect('http://localhost:' + socketPort);
+	var socket = io.connect('http://localhost:' + socketPort, {
+		reconnection: true
+	});
 	
 	const onStore = (store) => {
 		console.log('BG GOT spin-store', store);
@@ -63,8 +65,15 @@ function connectPortSocket(port, onConnect, onDisconnect) {
 	};
 	
 	socket.on('connect', () => {
+		
+		
+		socket._didConnect = true;
+		
 		// isSocketConnected = true;
 		console.log('Socket connected');
+		
+		console.log('turn off reconnect');
+		socket.io.opts.reconnect = false;
 		
 		// spinSocketListener.emit('connect', socket);
 		// console.log('emit get-spin-store');
@@ -88,11 +97,27 @@ function connectPortSocket(port, onConnect, onDisconnect) {
 		socket.removeAllListeners('connect');
 		socket.removeAllListeners('disconnect');
 		
+		console.log('socket disconnected, calling onDisconnect');
+		
+		port.postMessage({
+			socketDisconnected: true
+		});
+		
 		onDisconnect();
+		
+		// if (socket._didConnect) {
+		//
+		// }
+		// else {
+		// 	console.log('socket reconnect manual');
+		// 	socket.connect(function() {
+		// 		console.log('manually reconnected');
+		// 	});
+		// }
 	});
 	
-	console.log('emit get-spin-store 1');
-	socket.emit('get-spin-store');
+	// console.log('emit get-spin-store 1');
+	// socket.emit('get-spin-store');
 }
 
 // var connectingSocket = false;

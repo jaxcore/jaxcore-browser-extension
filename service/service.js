@@ -108,9 +108,9 @@ BrowserService.prototype.onConnect = function(socket) {
 		me.removeListener('spin-update', socket._onUpdate);
 		me.removeListener('spin-destroyed', socket._onDestroyed);
 		
-		socket.off('spin', this._callSpinMethod);
-		socket.off('get-spin-store', socket._onStore);
-		socket.off('disconnect', this._onDisconnect);
+		socket.removeListener('spin', me._callSpinMethod);
+		socket.removeListener('get-spin-store', socket._onStore);
+		socket.removeListener('disconnect', this._onDisconnect);
 	};
 	socket.on('disconnect', socket._onDisconnect);
 };

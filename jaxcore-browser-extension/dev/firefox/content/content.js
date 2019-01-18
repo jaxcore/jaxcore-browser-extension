@@ -86,45 +86,14 @@
 /************************************************************************/
 /******/ ({
 
-/***/ "./node_modules/webpack/buildin/global.js":
-/*!***********************************!*\
-  !*** (webpack)/buildin/global.js ***!
-  \***********************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-var g;
-
-// This works in non-strict mode
-g = (function() {
-	return this;
-})();
-
-try {
-	// This works if eval is allowed (see CSP)
-	g = g || new Function("return this")();
-} catch (e) {
-	// This works if the window reference is available
-	if (typeof window === "object") g = window;
-}
-
-// g can still be undefined, but nothing to do about it...
-// We return undefined, instead of nothing here, so it's
-// easier to handle this case. if(!global) { ...}
-
-module.exports = g;
-
-
-/***/ }),
-
 /***/ "./src/content/content.js":
 /*!********************************!*\
   !*** ./src/content/content.js ***!
   \********************************/
 /*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(module, exports) {
 
-/* WEBPACK VAR INJECTION */(function(global) {// import ext from '../utils/ext';
+// import ext from '../utils/ext';
 //
 // ext.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 // 	if (request.action === 'change-color') {
@@ -170,6 +139,10 @@ var bgPort = null;
 
 function disconnectExtension() {
   if (bgPort) {
+    console.log('content post socketDisconnected');
+    window.postMessage({
+      socketDisconnected: true
+    }, "*");
     bgPort.disconnect();
     bgPort = undefined;
   }
@@ -225,12 +198,17 @@ function connectExtension() {
 window.addEventListener("message", function (event) {
   // We only accept messages from ourselves
   if (event.source != window || !event.isTrusted) {
-    console.log('NOOOOO');
+    console.log('!isTrusted');
     return;
   }
 
+  if (event.data.socketDisconnected) {
+    console.log('content got socketDisconnected');
+    disconnectExtension();
+  }
+
   if (event.data.disconnectExtension) {
-    console.log('content got connectExtension');
+    console.log('content got disconnectExtension');
     disconnectExtension();
   } else if (event.data.connectExtension) {
     console.log('content got connectExtension');
@@ -245,9 +223,6 @@ window.addEventListener("message", function (event) {
     debugger;
   }
 });
-global.HELLO = 1234;
-console.log('DUDE', global.DUDE);
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../node_modules/webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
 
 /***/ })
 
