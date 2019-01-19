@@ -26,39 +26,60 @@ let activeTabId = null;
 // 	else callback();
 // }
 
+const postMessage = (port, msg) => {
+	if (isPortActiveTab(port)) {
+		port.postMessage(msg);
+	}
+	else {
+		console.log('not active tab');
+	}
+};
+
 function connectPortSocket(port, onConnect, onDisconnect) {
 	
 	var socketPort = 37524;
 	console.log('connecting port ' + socketPort + ' ...');
+	//console.log(port);
 	
 	/* Connects to the socket server */
 	var socket = io.connect('http://localhost:' + socketPort, {
 		reconnection: true
 	});
 	
-	const onStore = (store) => {
+	const onStore = function(store) {
 		console.log('BG GOT spin-store', store);
-		port.postMessage({
+		postMessage(port, {
 			spinStore: store
 		});
+		// postMessage(port, {
+		// 	spin: {
+		// 		store
+		// 	}
+		// });
 	};
 	const onCreated = (id, state) => {
 		console.log('BG GOT spin-created', state);
-		port.postMessage({
+		postMessage(port, {
 			spinId: id,
 			spinCreated: state
 		});
+		// postMessage(port, {
+		// 	spin: {
+		// 		id,
+		// 		created: state
+		// 	}
+		// });
 	};
 	const onUpdate = (id, state) => {
 		console.log('BG GOT spin-update', state);
-		port.postMessage({
+		postMessage(port,{
 			spinId: id,
 			spinUpdate: state
 		});
 	};
 	const onDestroyed = (id, state) => {
 		console.log('BG GOT spin-destroyed', state);
-		port.postMessage({
+		postMessage(port,{
 			spinId: id,
 			spinDestroyed: state
 		});
@@ -356,10 +377,14 @@ chrome.runtime.onMessage.addListener(function (request, sender, _sendResponse) {
 	}
 });
 
+function isPortActiveTab(port) {
+	return port.sender.tab.id === activeTabId;
+}
+
 function queryActiveTab() {
 	chrome.tabs.query({active: true, currentWindow: true}, function (tabs) {
 		if (tabs.length) {
-			if (activeTabId != tabs[0].id) {
+			if (activeTabId !== tabs[0].id) {
 				activeTabId = tabs[0].id;
 			}
 		}

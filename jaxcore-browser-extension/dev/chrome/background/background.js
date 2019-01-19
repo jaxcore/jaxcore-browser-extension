@@ -9318,9 +9318,18 @@ var activeTabId = null; // var isSocketConnected = false;
 // 	else callback();
 // }
 
+var postMessage = function postMessage(port, msg) {
+  if (isPortActiveTab(port)) {
+    port.postMessage(msg);
+  } else {
+    console.log('not active tab');
+  }
+};
+
 function connectPortSocket(port, onConnect, onDisconnect) {
   var socketPort = 37524;
-  console.log('connecting port ' + socketPort + ' ...');
+  console.log('connecting port ' + socketPort + ' ...'); //console.log(port);
+
   /* Connects to the socket server */
 
   var socket = socket_io_client__WEBPACK_IMPORTED_MODULE_0___default.a.connect('http://localhost:' + socketPort, {
@@ -9329,22 +9338,31 @@ function connectPortSocket(port, onConnect, onDisconnect) {
 
   var onStore = function onStore(store) {
     console.log('BG GOT spin-store', store);
-    port.postMessage({
+    postMessage(port, {
       spinStore: store
-    });
+    }); // postMessage(port, {
+    // 	spin: {
+    // 		store
+    // 	}
+    // });
   };
 
   var onCreated = function onCreated(id, state) {
     console.log('BG GOT spin-created', state);
-    port.postMessage({
+    postMessage(port, {
       spinId: id,
       spinCreated: state
-    });
+    }); // postMessage(port, {
+    // 	spin: {
+    // 		id,
+    // 		created: state
+    // 	}
+    // });
   };
 
   var onUpdate = function onUpdate(id, state) {
     console.log('BG GOT spin-update', state);
-    port.postMessage({
+    postMessage(port, {
       spinId: id,
       spinUpdate: state
     });
@@ -9352,7 +9370,7 @@ function connectPortSocket(port, onConnect, onDisconnect) {
 
   var onDestroyed = function onDestroyed(id, state) {
     console.log('BG GOT spin-destroyed', state);
-    port.postMessage({
+    postMessage(port, {
       spinId: id,
       spinDestroyed: state
     });
@@ -9612,13 +9630,17 @@ chrome.runtime.onMessage.addListener(function (request, sender, _sendResponse) {
   }
 });
 
+function isPortActiveTab(port) {
+  return port.sender.tab.id === activeTabId;
+}
+
 function queryActiveTab() {
   chrome.tabs.query({
     active: true,
     currentWindow: true
   }, function (tabs) {
     if (tabs.length) {
-      if (activeTabId != tabs[0].id) {
+      if (activeTabId !== tabs[0].id) {
         activeTabId = tabs[0].id;
       }
     }
