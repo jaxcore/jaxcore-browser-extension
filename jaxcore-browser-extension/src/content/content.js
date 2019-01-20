@@ -42,7 +42,9 @@
 // 	sendResponse({contentScriptResponse: "content says hello"});
 // });
 
-var bgPort = null;
+let bgPort = null;
+let isActiveTab = true;
+
 
 function disconnectExtension() {
 	if (bgPort) {
@@ -75,6 +77,8 @@ function connectExtension() {
 	bgPort.onMessage.addListener(function(msg) {
 		console.log("content received from bg", msg);
 		
+		
+		
 		if (msg.connectedExtension) {
 			
 			window.postMessage({
@@ -83,23 +87,34 @@ function connectExtension() {
 			}, "*");
 		}
 		
-		if (msg.spinStore) {
-			alert('got spin store content');
+		if ('isActiveTab' in msg) { // activeTab is sent along with .spinStore
+			if (msg.isActiveTab !== isActiveTab) {
+				isActiveTab = msg.isActiveTab;
+				console.log('isActiveTab');
+				window.postMessage({
+					isActiveTab
+				}, "*");
+			}
+		}
+		
+		if (msg.spin) {
+			console.log('got spin store content', msg);
+			
 			//debugger;
 			window.postMessage(msg, "*");
 		}
-		if (msg.spinCreated) {
-			console.log('spin-created', msg.id, msg.spinCreated);
-			window.postMessage(msg, "*");
-		}
-		if (msg.spinUpdate) {
-			console.log('spin-update', msg.id, msg.spinUpdate);
-			window.postMessage(msg, "*");
-		}
-		if (msg.spinDestroyed) {
-			console.log('spin-destroyed', msg.id, msg.spinDestroyed);
-			window.postMessage(msg, "*");
-		}
+		// if (msg.spinCreated) {
+		// 	console.log('spin-created', msg);
+		// 	window.postMessage(msg, "*");
+		// }
+		// if (msg.spinUpdate) {
+		// 	console.log('spin-update', msg);
+		// 	window.postMessage(msg, "*");
+		// }
+		// if (msg.spinDestroyed) {
+		// 	console.log('spin-destroyed', msg);
+		// 	window.postMessage(msg, "*");
+		// }
 	});
 	
 	bgPort.postMessage({

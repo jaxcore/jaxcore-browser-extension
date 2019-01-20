@@ -3,6 +3,8 @@ import EventEmitter from 'events';
 
 let activeTabId = null;
 
+const tabManager = new EventEmitter();
+
 // var isSocketConnected = false;
 // // var spinSocket;
 // // var contentPort;
@@ -49,44 +51,64 @@ function connectPortSocket(port, onConnect, onDisconnect) {
 	const onStore = function(store) {
 		console.log('BG GOT spin-store', store);
 		postMessage(port, {
-			spinStore: store
+			spin: {
+				store
+			},
+			isActiveTab: port.isActiveTab
 		});
-		// postMessage(port, {
-		// 	spin: {
-		// 		store
-		// 	}
-		// });
 	};
 	const onCreated = (id, state) => {
 		console.log('BG GOT spin-created', state);
 		postMessage(port, {
-			spinId: id,
-			spinCreated: state
+			spin: {
+				id,
+				created: state
+			}
 		});
-		// postMessage(port, {
-		// 	spin: {
-		// 		id,
-		// 		created: state
-		// 	}
-		// });
 	};
 	const onUpdate = (id, state) => {
 		console.log('BG GOT spin-update', state);
 		postMessage(port,{
-			spinId: id,
-			spinUpdate: state
+			spin: {
+				id,
+				update: state
+			}
 		});
 	};
 	const onDestroyed = (id, state) => {
 		console.log('BG GOT spin-destroyed', state);
 		postMessage(port,{
-			spinId: id,
-			spinDestroyed: state
+			spin: {
+				id,
+				destroyed: state
+			}
 		});
 	};
 	
+	port.isActiveTab = isPortActiveTab(port);
+	
+	const _onTabActive = (id) => {
+		const active = isPortActiveTab(port);
+		if (port.isActiveTab !== active) {
+			port.isActiveTab = active;
+			
+			//socket.once('')
+			if (active) {
+				socket.emit('get-spin-store');
+			}
+			else {
+				postMessage(port, {
+					isActiveTab: port.isActiveTab
+				});
+			}
+			
+			// postMessage(port, {
+			// 	activeTab: active
+			// });
+		}
+	};
+	
 	socket.on('connect', () => {
-		
 		
 		socket._didConnect = true;
 		
@@ -100,6 +122,8 @@ function connectPortSocket(port, onConnect, onDisconnect) {
 		// console.log('emit get-spin-store');
 		// socket.emit('get-spin-store');
 		
+		tabManager.addListener('active', _onTabActive);
+		
 		socket.on('spin-store', onStore);
 		socket.on('spin-created', onCreated);
 		socket.on('spin-update', onUpdate);
@@ -110,6 +134,9 @@ function connectPortSocket(port, onConnect, onDisconnect) {
 	
 	socket.on('disconnect', () => {
 		console.log('Socket disconnected');
+		
+		tabManager.removeListener('active', _onTabActive);
+		
 		socket.removeListener('spin-store', onStore);
 		socket.removeListener('spin-created', onCreated);
 		socket.removeListener('spin-update', onUpdate);
@@ -381,11 +408,14 @@ function isPortActiveTab(port) {
 	return port.sender.tab.id === activeTabId;
 }
 
+
+
 function queryActiveTab() {
 	chrome.tabs.query({active: true, currentWindow: true}, function (tabs) {
 		if (tabs.length) {
 			if (activeTabId !== tabs[0].id) {
 				activeTabId = tabs[0].id;
+				tabManager.emit('active', activeTabId);
 			}
 		}
 	});

@@ -117,12 +117,13 @@ BrowserService.prototype.onConnect = function(socket) {
 
 BrowserService.prototype.getSpinStore = function() {
 	var store = {};
-	for (var id in Spin.ids) {
+	for (var id in Spin.store.ids) {
 		if (this.isValidId(id)) {
-			store[id] = Spin.store.ids[id];s
+			store[id] = Spin.store[id];
 		}
 	}
 	return store;
+	//return JSON.stringify(store);
 };
 
 

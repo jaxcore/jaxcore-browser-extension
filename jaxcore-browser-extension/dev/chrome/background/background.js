@@ -9295,7 +9295,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var events__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(events__WEBPACK_IMPORTED_MODULE_1__);
 
 
-var activeTabId = null; // var isSocketConnected = false;
+var activeTabId = null;
+var tabManager = new events__WEBPACK_IMPORTED_MODULE_1___default.a(); // var isSocketConnected = false;
 // // var spinSocket;
 // // var contentPort;
 // var spinStore;
@@ -9339,41 +9340,62 @@ function connectPortSocket(port, onConnect, onDisconnect) {
   var onStore = function onStore(store) {
     console.log('BG GOT spin-store', store);
     postMessage(port, {
-      spinStore: store
-    }); // postMessage(port, {
-    // 	spin: {
-    // 		store
-    // 	}
-    // });
+      spin: {
+        store: store
+      },
+      isActiveTab: port.isActiveTab
+    });
   };
 
   var onCreated = function onCreated(id, state) {
     console.log('BG GOT spin-created', state);
     postMessage(port, {
-      spinId: id,
-      spinCreated: state
-    }); // postMessage(port, {
-    // 	spin: {
-    // 		id,
-    // 		created: state
-    // 	}
-    // });
+      spin: {
+        id: id,
+        created: state
+      }
+    });
   };
 
   var onUpdate = function onUpdate(id, state) {
     console.log('BG GOT spin-update', state);
     postMessage(port, {
-      spinId: id,
-      spinUpdate: state
+      spin: {
+        id: id,
+        update: state
+      }
     });
   };
 
   var onDestroyed = function onDestroyed(id, state) {
     console.log('BG GOT spin-destroyed', state);
     postMessage(port, {
-      spinId: id,
-      spinDestroyed: state
+      spin: {
+        id: id,
+        destroyed: state
+      }
     });
+  };
+
+  port.isActiveTab = isPortActiveTab(port);
+
+  var _onTabActive = function _onTabActive(id) {
+    var active = isPortActiveTab(port);
+
+    if (port.isActiveTab !== active) {
+      port.isActiveTab = active; //socket.once('')
+
+      if (active) {
+        socket.emit('get-spin-store');
+      } else {
+        postMessage(port, {
+          isActiveTab: port.isActiveTab
+        });
+      } // postMessage(port, {
+      // 	activeTab: active
+      // });
+
+    }
   };
 
   socket.on('connect', function () {
@@ -9385,6 +9407,7 @@ function connectPortSocket(port, onConnect, onDisconnect) {
     // console.log('emit get-spin-store');
     // socket.emit('get-spin-store');
 
+    tabManager.addListener('active', _onTabActive);
     socket.on('spin-store', onStore);
     socket.on('spin-created', onCreated);
     socket.on('spin-update', onUpdate);
@@ -9393,6 +9416,7 @@ function connectPortSocket(port, onConnect, onDisconnect) {
   });
   socket.on('disconnect', function () {
     console.log('Socket disconnected');
+    tabManager.removeListener('active', _onTabActive);
     socket.removeListener('spin-store', onStore);
     socket.removeListener('spin-created', onCreated);
     socket.removeListener('spin-update', onUpdate);
@@ -9642,6 +9666,7 @@ function queryActiveTab() {
     if (tabs.length) {
       if (activeTabId !== tabs[0].id) {
         activeTabId = tabs[0].id;
+        tabManager.emit('active', activeTabId);
       }
     }
   });
