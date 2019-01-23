@@ -10,5 +10,7 @@ public/
 yarn.lock
 
 jaxcore-browser-extension/dev/
+jaxcore-browser-extension/dev/*
 jaxcore-browser-extension/dist/
+jaxcore-browser-extension/dist/*
 jaxcore-browser-extension/node_modules/
