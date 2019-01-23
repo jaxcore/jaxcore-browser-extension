@@ -1,6 +1,5 @@
 node_modules/
 */node_modules/
-*/node_modules/
 *.out
 npm-debug.log
 .DS_STORE
@@ -9,3 +8,7 @@ npm-debug.log
 public/
 .log
 yarn.lock
+
+jaxcore-browser-extension/dev/
+jaxcore-browser-extension/dist/
+jaxcore-browser-extension/node_modules/

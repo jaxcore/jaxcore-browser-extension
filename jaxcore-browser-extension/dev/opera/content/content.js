@@ -141,12 +141,23 @@ var isActiveTab = true;
 function disconnectExtension() {
   if (bgPort) {
     console.log('content post socketDisconnected');
-    window.postMessage({
+    postMessage({
       socketDisconnected: true
-    }, "*");
+    });
     bgPort.disconnect();
     bgPort = undefined;
   }
+}
+
+function postMessage(msg) {
+  var data = {
+    '_jaxcore_content': {
+      message: msg,
+      protocol: 1
+    }
+  };
+  console.log('content post', data);
+  window.postMessage(data, '*'); //window.document.location.protocol+window.document.location.host);
 }
 
 function connectExtension() {
@@ -156,18 +167,18 @@ function connectExtension() {
   });
   bgPort.onDisconnect.addListener(function () {
     console.log('console port onDisconnect');
-    window.postMessage({
+    postMessage({
       connectedExtension: false
-    }, "*");
+    });
   });
   bgPort.onMessage.addListener(function (msg) {
     console.log("content received from bg", msg);
 
     if (msg.connectedExtension) {
-      window.postMessage({
+      postMessage({
         // isSocketConnected: !!msg.isSocketConnected,
         connectedExtension: !!msg.connectedExtension
-      }, "*");
+      });
     }
 
     if ('isActiveTab' in msg) {
@@ -175,29 +186,17 @@ function connectExtension() {
       if (msg.isActiveTab !== isActiveTab) {
         isActiveTab = msg.isActiveTab;
         console.log('isActiveTab');
-        window.postMessage({
+        postMessage({
           isActiveTab: isActiveTab
-        }, "*");
+        });
       }
     }
 
     if (msg.spin) {
       console.log('got spin store content', msg); //debugger;
 
-      window.postMessage(msg, "*");
-    } // if (msg.spinCreated) {
-    // 	console.log('spin-created', msg);
-    // 	window.postMessage(msg, "*");
-    // }
-    // if (msg.spinUpdate) {
-    // 	console.log('spin-update', msg);
-    // 	window.postMessage(msg, "*");
-    // }
-    // if (msg.spinDestroyed) {
-    // 	console.log('spin-destroyed', msg);
-    // 	window.postMessage(msg, "*");
-    // }
-
+      postMessage(msg);
+    }
   });
   bgPort.postMessage({
     connectExtension: true
@@ -205,31 +204,34 @@ function connectExtension() {
 }
 
 window.addEventListener("message", function (event) {
-  // We only accept messages from ourselves
+  console.log('content on message', event.data); // We only accept messages from ourselves
+
   if (event.source != window || !event.isTrusted) {
     console.log('!isTrusted');
     return;
   }
 
-  if (event.data.socketDisconnected) {
-    console.log('content got socketDisconnected');
-    disconnectExtension();
-  }
+  if (event.data._jaxcore_client) {
+    var msg = event.data._jaxcore_client.message; // if (msg.socketDisconnected) {
+    // 	console.log('content got socketDisconnected');
+    // 	disconnectExtension();
+    // }
 
-  if (event.data.disconnectExtension) {
-    console.log('content got disconnectExtension');
-    disconnectExtension();
-  } else if (event.data.connectExtension) {
-    console.log('content got connectExtension');
-    connectExtension(); //alert('connectExtension1');
-    // chrome.runtime.postMessage({
-    // 	connectExtension: true
-    // }, function(response) {
-    // 	console.log('extension connected?', response);
-    // });
-  } else if (event.data.type && event.data.type == "FROM_PAGE") {
-    console.log("Content script received message: " + event.data.text);
-    debugger;
+    if (msg.disconnectExtension) {
+      console.log('content got disconnectExtension');
+      disconnectExtension();
+    } else if (msg.connectExtension) {
+      console.log('content got connectExtension');
+      connectExtension();
+    } // else if (event.data.type && (event.data.type == "FROM_PAGE")) {
+    // 	console.log("Content script received message: " + event.data.text);
+    // 	debugger;
+    // }
+    else {
+        console.log('content unhandled msg', msg);
+      }
+  } else {
+    console.log('not _jaxcore_client', event.data);
   }
 });
 
