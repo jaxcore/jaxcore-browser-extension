@@ -347,33 +347,33 @@ chrome.runtime.onMessage.addListener(function (request, sender, _sendResponse) {
 			// }
 			return;
 		}
-		if (request.getSocketState) {
-			console.log('request.getPopupState isSocketConnected=' + isSocketConnected);
-			
-			sendResponse({
-				isSocketConnected
-			});
-			
-			// if (isSocketConnected) {
-			// 	if (spinSocket) {
-			// 		console.log('emit get-spin-store');
-			// 		spinSocket.emit('get-spin-store');
-			// 	}
-			// }
-			
-			// if (isSocketConnected) {
-			// 	spinSocket.once('spin-store', function(data) {
-			// 		let store = JSON.parse(data);
-			// 		sendResponse(getPopupState(store));
-			// 	});
-			// 	spinSocket.emit('get-spin-store');
-			// 	//sendResponse(getPopupState());
-			// }
-			// else {
-			// 	sendResponse(getPopupState());
-			// }
-			return;
-		}
+		// if (request.getSocketState) {
+		// 	console.log('request.getPopupState isSocketConnected=' + isSocketConnected);
+		//
+		// 	sendResponse({
+		// 		isSocketConnected
+		// 	});
+		//
+		// 	// if (isSocketConnected) {
+		// 	// 	if (spinSocket) {
+		// 	// 		console.log('emit get-spin-store');
+		// 	// 		spinSocket.emit('get-spin-store');
+		// 	// 	}
+		// 	// }
+		//
+		// 	// if (isSocketConnected) {
+		// 	// 	spinSocket.once('spin-store', function(data) {
+		// 	// 		let store = JSON.parse(data);
+		// 	// 		sendResponse(getPopupState(store));
+		// 	// 	});
+		// 	// 	spinSocket.emit('get-spin-store');
+		// 	// 	//sendResponse(getPopupState());
+		// 	// }
+		// 	// else {
+		// 	// 	sendResponse(getPopupState());
+		// 	// }
+		// 	return;
+		// }
 		
 		return;
 	}

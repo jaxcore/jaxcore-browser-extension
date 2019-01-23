@@ -155,25 +155,24 @@ function postMessage(msg) {
       message: msg,
       protocol: 1
     }
-  };
-  console.log('content post', data);
-  window.postMessage(data, '*'); //window.document.location.protocol+window.document.location.host);
+  }; // console.log('content post', data);
+
+  window.postMessage(data, window.document.location.protocol + window.document.location.host);
 }
 
 function connectExtension() {
-  console.log('content sending connectExtension to background');
+  // console.log('content sending connectExtension to background');
   bgPort = chrome.runtime.connect({
     name: "port-from-cs"
   });
   bgPort.onDisconnect.addListener(function () {
-    console.log('console port onDisconnect');
+    // console.log('console port onDisconnect');
     postMessage({
       connectedExtension: false
     });
   });
   bgPort.onMessage.addListener(function (msg) {
-    console.log("content received from bg", msg);
-
+    // console.log("content received from bg", msg);
     if (msg.connectedExtension) {
       postMessage({
         // isSocketConnected: !!msg.isSocketConnected,
@@ -184,8 +183,8 @@ function connectExtension() {
     if ('isActiveTab' in msg) {
       // activeTab is sent along with .spinStore
       if (msg.isActiveTab !== isActiveTab) {
-        isActiveTab = msg.isActiveTab;
-        console.log('isActiveTab');
+        isActiveTab = msg.isActiveTab; // console.log('isActiveTab');
+
         postMessage({
           isActiveTab: isActiveTab
         });
@@ -193,8 +192,8 @@ function connectExtension() {
     }
 
     if (msg.spin) {
-      console.log('got spin store content', msg); //debugger;
-
+      // console.log('got spin store content', msg);
+      //debugger;
       postMessage(msg);
     }
   });
@@ -204,8 +203,8 @@ function connectExtension() {
 }
 
 window.addEventListener("message", function (event) {
-  console.log('content on message', event.data); // We only accept messages from ourselves
-
+  // console.log('content on message', event.data);
+  // We only accept messages from ourselves
   if (event.source != window || !event.isTrusted) {
     console.log('!isTrusted');
     return;
@@ -218,10 +217,10 @@ window.addEventListener("message", function (event) {
     // }
 
     if (msg.disconnectExtension) {
-      console.log('content got disconnectExtension');
+      // console.log('content got disconnectExtension');
       disconnectExtension();
     } else if (msg.connectExtension) {
-      console.log('content got connectExtension');
+      // console.log('content got connectExtension');
       connectExtension();
     } // else if (event.data.type && (event.data.type == "FROM_PAGE")) {
     // 	console.log("Content script received message: " + event.data.text);
@@ -230,8 +229,7 @@ window.addEventListener("message", function (event) {
     else {
         console.log('content unhandled msg', msg);
       }
-  } else {
-    console.log('not _jaxcore_client', event.data);
+  } else {// console.log('not _jaxcore_client', event.data);
   }
 });
 
