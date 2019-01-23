@@ -1,6 +1,6 @@
 {
     "name": "jaxcore-browser-extension",
-    "author": "Kamil Mikosz",
+    "author": "Jaxcores",
     "version": "0.0.1",
     "manifest_version": 2,
     "description": "",
@@ -31,7 +31,8 @@
         "tabs",
         "storage",
         "http://*/*",
-        "https://*/*"
+        "https://*/*",
+        "background"
     ],
     "options_ui": {
         "page": "options/index.html"
@@ -41,7 +42,10 @@
             "19": "assets/icons/icon-19.png",
             "38": "assets/icons/icon-38.png"
         },
-        "default_title": "Extension Boilerplate",
+        "default_title": "Jaxcore",
         "default_popup": "popup/index.html"
+    },
+    "externally_connectable": {
+        "matches": ["*://localhost/*"]
     }
 }

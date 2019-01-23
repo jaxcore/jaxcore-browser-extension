@@ -9,8 +9,10 @@ public/
 .log
 yarn.lock
 
-jaxcore-browser-extension/dev/
+jaxcore-browser-extension/dev
 jaxcore-browser-extension/dev/*
-jaxcore-browser-extension/dist/
+jaxcore-browser-extension/dist
 jaxcore-browser-extension/dist/*
+jaxcore-browser-extension/temp
+jaxcore-browser-extension/temp/*
 jaxcore-browser-extension/node_modules/

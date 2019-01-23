@@ -204,13 +204,15 @@ function connectExtension() {
 
 window.addEventListener("message", function (event) {
   // console.log('content on message', event.data);
-  // We only accept messages from ourselves
-  if (event.source != window || !event.isTrusted) {
-    console.log('!isTrusted');
+  // We only accept messages from ourselves  || !event.isTrusted
+  if (event.source !== window) {
+    console.log('!isTrusted', event.source, window);
+    debugger;
     return;
   }
 
   if (event.data._jaxcore_client) {
+    console.log('content received message', event);
     var msg = event.data._jaxcore_client.message; // if (msg.socketDisconnected) {
     // 	console.log('content got socketDisconnected');
     // 	disconnectExtension();
@@ -232,6 +234,7 @@ window.addEventListener("message", function (event) {
   } else {// console.log('not _jaxcore_client', event.data);
   }
 });
+console.log('content script loaded');
 
 /***/ })
 

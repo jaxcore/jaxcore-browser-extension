@@ -1,7 +1,7 @@
 {
   "name": "jaxcore-browser-extension",
-  "version": "0.0.2",
-  "description": "Boilerplate for Chrome, FF, Safari exstension",
+  "version": "0.0.1",
+  "description": "Jaxcore Browser Extension",
   "main": "webpack.config.js",
   "scripts": {
     "test": "karma start",
@@ -9,7 +9,7 @@
     "watch-dev": "webpack --config webpack.config.dev.js --watch",
     "build": "webpack --config webpack.config.dist.js"
   },
-  "author": "Kamil Mikosz",
+  "author": "Jaxcore",
   "dependencies": {
     "@babel/core": "^7.0.0-beta.49",
     "@babel/preset-env": "^7.0.0-beta.49",
