@@ -9359,6 +9359,7 @@ function connectPortSocket(port, onConnect, onDisconnect) {
 
   var onUpdate = function onUpdate(id, state) {
     console.log('BG GOT spin-update', state);
+    updateSpinIcon(state);
     postMessage(port, {
       spin: {
         id: id,
@@ -9687,7 +9688,27 @@ function sendMessageActiveTab(msg) {
       });
     }
   });
-} // var c = 0;
+}
+
+var jaxcoreRotateIcons = [1, "idle", 8, 16, 24];
+var jaxcoreRotateIndex = 0;
+
+var setIcon = function setIcon() {
+  chrome.browserAction.setIcon({
+    path: 'assets/icons/rotate/' + jaxcoreRotateIcons[jaxcoreRotateIndex] + '.png'
+  });
+};
+
+function updateSpinIcon(state) {
+  jaxcoreRotateIndex++;
+  if (jaxcoreRotateIndex >= jaxcoreRotateIcons.length) jaxcoreRotateIndex = 0;
+  setIcon();
+}
+
+chrome.runtime.onInstalled.addListener(function () {
+  setIcon();
+  setInterval(updateSpinIcon, 2000);
+}); // var c = 0;
 // setInterval(function() {
 // 	console.log('background', c++);
 // 	sendMessageActiveTab({

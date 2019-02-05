@@ -24276,7 +24276,7 @@ function (_Component) {
       if (this.state.loading) {
         return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
           id: "popupcontainer"
-        }, "loading...");
+        }, "xloading...");
       } else {
         return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
           id: "popupcontainer"

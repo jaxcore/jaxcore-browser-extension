@@ -47,7 +47,7 @@ class Popup extends Component {
 	
 	renderContent() {
 		if (this.state.loading) {
-			return (<div id="popupcontainer">loading...
+			return (<div id="popupcontainer">xloading...
 				
 				{/*<div>*/}
 				{/*Port: {this.state.isPortConnected.toString()}<br/>*/}

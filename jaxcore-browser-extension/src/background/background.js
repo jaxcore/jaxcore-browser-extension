@@ -68,6 +68,9 @@ function connectPortSocket(port, onConnect, onDisconnect) {
 	};
 	const onUpdate = (id, state) => {
 		console.log('BG GOT spin-update', state);
+		
+		updateSpinIcon(state);
+		
 		postMessage(port,{
 			spin: {
 				id,
@@ -432,6 +435,25 @@ function sendMessageActiveTab(msg) {
 		
 	});
 }
+
+let jaxcoreRotateIcons = [1, "idle", 8, 16, 24];
+let jaxcoreRotateIndex = 0;
+const setIcon = function() {
+	chrome.browserAction.setIcon({path: 'assets/icons/rotate/' + jaxcoreRotateIcons[jaxcoreRotateIndex] + '.png'});
+};
+
+function updateSpinIcon(state) {
+	jaxcoreRotateIndex++;
+	if (jaxcoreRotateIndex >= jaxcoreRotateIcons.length) jaxcoreRotateIndex = 0;
+	setIcon();
+}
+
+chrome.runtime.onInstalled.addListener(function() {
+	setIcon();
+	
+	setInterval(updateSpinIcon, 2000);
+});
+
 
 // var c = 0;
 // setInterval(function() {
