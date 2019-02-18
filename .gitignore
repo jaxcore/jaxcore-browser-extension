@@ -8,7 +8,8 @@ npm-debug.log
 public/
 .log
 yarn.lock
-
+/dev/chrome
+jaxcore-browser-extension/dev/*/*
 jaxcore-browser-extension/dev
 jaxcore-browser-extension/dev/*
 jaxcore-browser-extension/dist

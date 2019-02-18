@@ -432,7 +432,6 @@ function sendMessageActiveTab(msg) {
 				console.log('GOT Response', response);
 			});
 		}
-		
 	});
 }
 
