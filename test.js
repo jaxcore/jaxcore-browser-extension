@@ -12,4 +12,5 @@ BrowserService.connect(config,function() {
 
 Spin.connectAll(function (spin) {
 	console.log('spin connected', spin.id);
+	spin.setThrottle(0);
 });

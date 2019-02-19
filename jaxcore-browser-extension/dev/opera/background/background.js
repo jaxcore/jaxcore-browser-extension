@@ -9296,7 +9296,8 @@ __webpack_require__.r(__webpack_exports__);
 
 
 var activeTabId = null;
-var tabManager = new events__WEBPACK_IMPORTED_MODULE_1___default.a(); // var isSocketConnected = false;
+var tabManager = new events__WEBPACK_IMPORTED_MODULE_1___default.a();
+console.log('Jaxcore extension ready'); // var isSocketConnected = false;
 // // var spinSocket;
 // // var contentPort;
 // var spinStore;

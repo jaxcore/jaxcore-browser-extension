@@ -42,6 +42,8 @@
 // 	sendResponse({contentScriptResponse: "content says hello"});
 // });
 
+console.log('Jaxcore content script loaded');
+
 let bgPort = null;
 let isActiveTab = true;
 
@@ -160,4 +162,9 @@ window.addEventListener("message", function(event) {
 	}
 });
 
-console.log('content script loaded');
+setTimeout(function() {
+	console.log('Jaxcore content script ready');
+	postMessage({
+		extensionReady: true
+	});
+},1);

@@ -5,6 +5,8 @@ let activeTabId = null;
 
 const tabManager = new EventEmitter();
 
+console.log('Jaxcore extension ready');
+
 // var isSocketConnected = false;
 // // var spinSocket;
 // // var contentPort;
