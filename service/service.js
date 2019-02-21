@@ -101,6 +101,23 @@ BrowserService.prototype.onConnect = function(socket) {
 	
 	socket.on('spin', this._callSpinMethod);
 	
+	socket.on('spin-command', (command) => {
+		
+		
+		let id = command.id;
+		let method = command.method;
+		let args = command.args;
+		if (id in Spin.spinIds) {
+			console.log('spin-command', id, method, args);
+			Spin.spinIds[id].sendCommand(id, method, args);
+		}
+		else {
+			console.log('could not find ', id);
+			process.exit();
+		}
+		
+	});
+	
 	socket._onDisconnect = function() {
 		log('socket DISCONNECT', socket.request.session);
 		

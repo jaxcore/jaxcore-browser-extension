@@ -252,12 +252,27 @@ function onPortConnect(port) {
 	function onMessageListener(msg) {
 		console.log('onMessageListener', msg);
 		
-		if (msg.connectExtension) {
+		if (msg.spinCommand) {
+			
+			if (port.__socket) {
+				console.log('spinCommand sending to socket', msg);
+				debugger;
+				port.__socket.emit('spin-command', msg.spinCommand);
+			}
+			else {
+				console.log('spinCommand no socket for port', msg);
+				debugger;
+			}
+			
+		}
+		else if (msg.connectExtension) {
 			console.log('BG received from content: connectExtension');
 			
 			
 			connectPortSocket(port, (socket) => {
 				console.log('port socket connected');
+				
+				port.__socket = socket;
 				
 				const _dis = function(event) {
 					console.log('destroy socket');

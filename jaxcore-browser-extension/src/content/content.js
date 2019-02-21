@@ -97,7 +97,7 @@ function connectExtension() {
 			});
 		}
 		
-		if ('isActiveTab' in msg) { // activeTab is sent along with .spinStore
+		else if ('isActiveTab' in msg) { // activeTab is sent along with .spinStore
 			if (msg.isActiveTab !== isActiveTab) {
 				isActiveTab = msg.isActiveTab;
 				// console.log('isActiveTab');
@@ -107,12 +107,13 @@ function connectExtension() {
 			}
 		}
 		
-		if (msg.spin) {
-			// console.log('got spin store content', msg);
-			
+		else if (msg.spin) { // spin data from bg
+			console.log('got spin store content', msg);
 			//debugger;
 			postMessage(msg);
 		}
+		
+		
 	});
 	
 	bgPort.postMessage({
@@ -141,7 +142,19 @@ window.addEventListener("message", function(event) {
 		// 	console.log('content got socketDisconnected');
 		// 	disconnectExtension();
 		// }
-		if (msg.disconnectExtension) {
+	
+		if (msg.spinCommand) { // spin command to bg
+			if (bgPort) {
+				console.log('sending to bg port', msg);
+				bgPort.postMessage(msg);
+			}
+			else {
+				console.log('no bgport');
+				debugger;
+			}
+			// postMessage(msg);
+		}
+		else if (msg.disconnectExtension) {
 			// console.log('content got disconnectExtension');
 			disconnectExtension();
 		}
@@ -154,7 +167,8 @@ window.addEventListener("message", function(event) {
 		// 	debugger;
 		// }
 		else {
-			console.log('content unhandled msg', msg);
+			console.log('content unhandled msg x', msg);
+			debugger;
 		}
 	}
 	else {
