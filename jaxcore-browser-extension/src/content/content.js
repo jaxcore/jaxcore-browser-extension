@@ -113,6 +113,12 @@ function connectExtension() {
 			postMessage(msg);
 		}
 		
+		else if (msg.listen) { // listen data from bg
+			console.log('got listen content', msg);
+			// debugger;
+			postMessage(msg);
+		}
+		
 		
 	});
 	
@@ -145,14 +151,24 @@ window.addEventListener("message", function(event) {
 	
 		if (msg.spinCommand) { // spin command to bg
 			if (bgPort) {
-				console.log('sending to bg port', msg);
+				console.log('spinCommand sending to bg port', msg);
 				bgPort.postMessage(msg);
 			}
 			else {
-				console.log('no bgport');
+				console.log('spinCommand no bgport');
 				debugger;
 			}
 			// postMessage(msg);
+		}
+		else if (msg.listenCommand) {
+			if (bgPort) {
+				console.log('listenCommand sending to bg port', msg.listenCommand);
+				bgPort.postMessage(msg);
+			}
+			else {
+				console.log('listenCommand no bgport');
+				// debugger;
+			}
 		}
 		else if (msg.disconnectExtension) {
 			// console.log('content got disconnectExtension');

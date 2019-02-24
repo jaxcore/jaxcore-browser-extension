@@ -11,6 +11,9 @@ var io = require('socket.io')(socketServer);
 
 var Spin = require('jaxcore-spin');
 
+var Listen = require('jaxcore-listen');
+let listen = new Listen();
+
 function BrowserService() {
 	this.constructor();
 	this._callSpinMethod = this.callSpinMethod.bind(this);
@@ -99,11 +102,9 @@ BrowserService.prototype.onConnect = function(socket) {
 	};
 	socket.on('get-spin-store', socket._onStore);
 	
-	socket.on('spin', this._callSpinMethod);
+	// socket.on('spin', this._callSpinMethod);
 	
-	socket.on('spin-command', (command) => {
-		
-		
+	socket._onSpinCommand = function(command) {
 		let id = command.id;
 		let method = command.method;
 		let args = command.args;
@@ -115,8 +116,40 @@ BrowserService.prototype.onConnect = function(socket) {
 			console.log('could not find ', id);
 			process.exit();
 		}
-		
-	});
+	};
+	
+	socket.on('spin-command', socket._onSpinCommand);
+	
+	socket._onListenCommand = function(command) {
+		if (command === 'start') {
+			const onRecognize = function (text) {
+				console.log('\nRecognized as:', text);
+				
+				if (text.length>0) {
+					socket.emit('listen-recognized', text);
+				}
+				else {
+					console.log('nothing recognized');
+				}
+				// process.exit();
+				
+			};
+			console.log('Listen starting');
+			
+			listen.start(onRecognize);
+			
+			// setTimeout(function () {
+			// 	console.log('Listen stop');
+			// 	listen.stop();
+			// }, 4000);
+		}
+		else if (command === 'stop') {
+			console.log('Listen stop');
+			listen.stop();
+		}
+	};
+	
+	socket.on('listen-command', socket._onListenCommand);
 	
 	socket._onDisconnect = function() {
 		log('socket DISCONNECT', socket.request.session);
@@ -125,8 +158,12 @@ BrowserService.prototype.onConnect = function(socket) {
 		me.removeListener('spin-update', socket._onUpdate);
 		me.removeListener('spin-destroyed', socket._onDestroyed);
 		
-		socket.removeListener('spin', me._callSpinMethod);
+		// socket.removeListener('spin', me._callSpinMethod);
 		socket.removeListener('get-spin-store', socket._onStore);
+		
+		socket.removeListener('spin-command', socket._onSpinCommand);
+		socket.removeListener('listen-command', socket._onListenCommand);
+		
 		socket.removeListener('disconnect', this._onDisconnect);
 	};
 	socket.on('disconnect', socket._onDisconnect);

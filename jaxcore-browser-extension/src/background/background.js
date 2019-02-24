@@ -90,6 +90,17 @@ function connectPortSocket(port, onConnect, onDisconnect) {
 		});
 	};
 	
+	const onRecognized = (text) => {
+		console.log('BG GOT listen-recognized', text);
+		postMessage(port,{
+			listen: {
+				recognizedText: text
+			}
+		});
+	};
+	
+	
+	
 	port.isActiveTab = isPortActiveTab(port);
 	
 	const _onTabActive = (id) => {
@@ -133,6 +144,8 @@ function connectPortSocket(port, onConnect, onDisconnect) {
 		socket.on('spin-created', onCreated);
 		socket.on('spin-update', onUpdate);
 		socket.on('spin-destroyed', onDestroyed);
+		
+		socket.on('listen-recognized', onRecognized);
 		
 		onConnect(socket);
 	});
@@ -252,11 +265,22 @@ function onPortConnect(port) {
 	function onMessageListener(msg) {
 		console.log('onMessageListener', msg);
 		
-		if (msg.spinCommand) {
+		if (msg.listenCommand) {
+			if (port.__socket) {
+				console.log('listenCommand sending to socket', msg);
+				// debugger;
+				port.__socket.emit('listen-command', msg.listenCommand);
+			}
+			else {
+				console.log('spinCommand no socket for port', msg);
+				debugger;
+			}
+		}
+		else if (msg.spinCommand) {
 			
 			if (port.__socket) {
 				console.log('spinCommand sending to socket', msg);
-				debugger;
+				// debugger;
 				port.__socket.emit('spin-command', msg.spinCommand);
 			}
 			else {
