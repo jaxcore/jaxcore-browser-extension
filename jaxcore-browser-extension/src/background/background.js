@@ -91,7 +91,8 @@ function connectPortSocket(port, onConnect, onDisconnect) {
 	};
 	
 	const onRecognized = (text) => {
-		console.log('BG GOT listen-recognized', text);
+		console.log('socket BG GOT listen-recognized', text);
+		debugger;
 		postMessage(port,{
 			listen: {
 				recognizedText: text

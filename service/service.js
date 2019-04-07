@@ -120,32 +120,68 @@ BrowserService.prototype.onConnect = function(socket) {
 	
 	socket.on('spin-command', socket._onSpinCommand);
 	
-	socket._onListenCommand = function(command) {
+	const listenOnRecognize = function (text) {
+		console.log('\nService Recognized as:', text);
+		if (text.length>0) {
+			console.log('sockdet emit listen-recognized', text);
+			socket.emit('listen-recognized', text);
+		}
+		else {
+			console.log('nothing recognized');
+		}
+	};
+	// const listenOnStart = function () {
+	// 	socket.emit('listen-start');
+	// };
+	// const listenOnStop = function () {
+	// 	socket.emit('listen-stop');
+	// };
+	// const listenOnStartContinuous = function () {
+	// 	socket.emit('listen-start-continuous');
+	// };
+	// const listenOnStopContinuous = function () {
+	// 	socket.emit('listen-stop-continuous');
+	// };
+	
+	socket._onListenCommand = function(listenCommand) {
+		let command = listenCommand.command;
+		let options = listenCommand.options;
+		
 		if (command === 'start') {
-			const onRecognize = function (text) {
-				console.log('\nRecognized as:', text);
-				
-				if (text.length>0) {
-					socket.emit('listen-recognized', text);
-				}
-				else {
-					console.log('nothing recognized');
-				}
-				// process.exit();
-				
-			};
 			console.log('Listen starting');
 			
-			listen.start(onRecognize);
+			listen.once('recognize', listenOnRecognize);
 			
-			// setTimeout(function () {
-			// 	console.log('Listen stop');
-			// 	listen.stop();
-			// }, 4000);
+			listen.once('start', function() {
+				socket.emit('listen-start');
+			});
+			listen.start(); // todo: add options
 		}
 		else if (command === 'stop') {
 			console.log('Listen stop');
+			listen.once('stop', function() {
+				socket.emit('listen-stop');
+				console.log('stoppp!!!');
+				process.exit();
+			});
+			// listen.removeListener('recognize', listenOnRecognize);
 			listen.stop();
+		}
+		else if (command === 'start-continuous') {
+			console.log('Listen continuous starting');
+			listen.on('recognize', listenOnRecognize);
+			listen.once('start-continunous', function() {
+				socket.emit('listen-start-continuous');
+			});
+			listen.startContinuous(options);
+		}
+		else if (command === 'stop-continuous') {
+			console.log('Listen continuous stopping');
+			listen.once('stop-continunous', function() {
+				socket.emit('listen-stop-continuous');
+				listen.removeListener('recognize', listenOnRecognize);
+			});
+			listen.stopContinuous();
 		}
 	};
 	
@@ -162,6 +198,7 @@ BrowserService.prototype.onConnect = function(socket) {
 		socket.removeListener('get-spin-store', socket._onStore);
 		
 		socket.removeListener('spin-command', socket._onSpinCommand);
+		
 		socket.removeListener('listen-command', socket._onListenCommand);
 		
 		socket.removeListener('disconnect', this._onDisconnect);
