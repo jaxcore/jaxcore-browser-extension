@@ -69,7 +69,7 @@ function connectPortSocket(port, onConnect, onDisconnect) {
 	
 	const onRecognized = (text) => {
 		console.log('socket BG GOT listen-recognized', text);
-		debugger;
+		// debugger;
 		postMessage(port,{
 			listen: {
 				recognizedText: text
@@ -164,7 +164,7 @@ function onPortConnect(port) {
 			}
 			else {
 				console.log('spinCommand no socket for port', msg);
-				debugger;
+				// debugger;
 			}
 		}
 		else if (msg.spinCommand) {
