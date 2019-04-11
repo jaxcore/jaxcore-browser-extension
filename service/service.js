@@ -12,11 +12,12 @@ var io = require('socket.io')(socketServer);
 var Spin = require('jaxcore-spin');
 
 var Listen = require('jaxcore-listen');
-let listen = new Listen();
+
+console.log('loading models', __dirname+'/models');
 
 function BrowserService() {
 	this.constructor();
-	this._callSpinMethod = this.callSpinMethod.bind(this);
+	// this._callSpinMethod = this.callSpinMethod.bind(this);
 }
 
 BrowserService.prototype = new EventEmitter();
@@ -24,6 +25,10 @@ BrowserService.prototype.constructor = EventEmitter;
 
 BrowserService.prototype.connect = function(config, callback) {
 	var me = this;
+	
+	this.listen = new Listen({
+		path: config.modelPath  //__dirname+'/../../jaxcore-listen/models'
+	});
 	
 	if (config.ids) {
 		this.validIds = config.ids;
@@ -65,7 +70,7 @@ BrowserService.prototype.connect = function(config, callback) {
 		}
 		else log('spinDestroy invalid id', id);
 	};
-
+	
 	Spin.store.addListener('created', spinCreate);
 	Spin.store.addListener('update', spinUpdate);
 	Spin.store.addListener('destroyed', spinDestroy);
@@ -79,6 +84,9 @@ BrowserService.prototype.isValidId = function(id) {
 };
 
 BrowserService.prototype.onConnect = function(socket) {
+	
+	var listen = this.listen;
+	
 	var me = this;
 	
 	socket.emit('spin-store', this.getSpinStore());
@@ -183,6 +191,10 @@ BrowserService.prototype.onConnect = function(socket) {
 			});
 			listen.stopContinuous();
 		}
+		else {
+			console.log('listen command not recognized', command);
+			process.exit();
+		}
 	};
 	
 	socket.on('listen-command', socket._onListenCommand);
@@ -219,10 +231,12 @@ BrowserService.prototype.getSpinStore = function() {
 
 
 
-BrowserService.prototype.callSpinMethod = function (id, method, args) {
-	log('calling method', id, method, args);
-	var spin = Spins.ids[id];
-	spin[method].apply(spin, args);
-};
+// BrowserService.prototype.callSpinMethod = function (id, method, args) {
+// 	log('calling method', id, method, args);
+// 	var spin = Spins.ids[id];
+// 	spin[method].apply(spin, args);
+// };
+
+// listen.startContinuous();
 
 module.exports = new BrowserService();

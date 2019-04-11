@@ -1,5 +1,5 @@
 {
-  "name": "browser-plugin",
+  "name": "jaxcore-browser-plugin",
   "version": "0.0.1",
   "description": "Jaxcore plugin for controlling web apps",
   "main": "index.js",
@@ -7,7 +7,8 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "npm test"
+    "test": "npm test",
+    "run": "node run.js ./models"
   },
   "repository": {
     "type": "git",
@@ -18,6 +19,8 @@
   "homepage": "https://bitbucket.org/jaxcore/browser-plugin#readme",
   "dependencies": {
     "express": "^4.16.4",
-    "socket.io": "^2.2.0"
+    "socket.io": "^2.2.0",
+    "jaxcore-spin": "^0.0.2",
+    "jaxcore-listen": "^0.0.1"
   }
 }
