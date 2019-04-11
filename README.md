@@ -1,37 +1,33 @@
-# Jaxcore Browser Plugin
+# Jaxcore Web Browser Extension
 
-This NodeJS library provides the web communication channel from Jaxcore Desktop app to the Jaxcore web browser extension.
+## Install
 
-To run Jaxcore headless (without the desktop app) run the following:
+todo: publish to extension stores
+
+
+## Build From Source
 
 ```
-git clone https://github.com/jaxcore/browser-plugin.gif
-cd browser-plugin
+git clone https://github.com/jaxcore/jaxcore-browser-extension.git
+cd jaxcore-browser-extension
 npm install
+npm run dev
 ```
 
-Download DeepSpeech English language model:
+See the resulting `dev` directory for the 3 extensions for Chrome, Firefox, and Opera.
 
-```
-wget https://github.com/mozilla/DeepSpeech/releases/download/v0.4.1/deepspeech-0.4.1-models.tar.gz
-tar xvfz deepspeech-0.4.1-models.tar.gz
-```
+## Install Extension From Source
 
-The tar.gz file can then be deleted:
-```
-rm deepspeech-0.4.1-models.tar.gz
-```
+In Chrome, go to [chrome://extensions](chrome://extensions) and click "Load Unpacked", and choose the `dev/chrome` directory.
 
-Run the headless server:
+In Firefox, go to [about:addons](about:addons) and click the gear icon and choose "Debug Add-ons", then choose "Load Temporary Add-on" and select the `dev/firefox/manifest.json` file.
 
-```
-node run.js ./models
-```
+In Opera...
 
-With the Jaxcore web browser extension installed you can now try the Jaxcore Listen demos at:
+## Test It Out
 
-[https://jaxcore.github.io/jaxcore-listen/](https://jaxcore.github.io/jaxcore-listen/)
+With either the [Jaxcore Desktop app]() install, or the headless [Browser Plugin]() service running try the following:
 
-Or the Voice Chess game at:
+[https://jaxcore.github.io/jaxcore-listen/examples/web-demo/](https://jaxcore.github.io/jaxcore-listen/examples/web-demo/)
 
-[https://chess.jaxcore.com](https://chess.jaxcore.com)
+[https://jaxcore.github.io/jaxcore-listen/examples/web-vocab-tester/](https://jaxcore.github.io/jaxcore-listen/examples/web-vocab-tester/)

@@ -5,30 +5,9 @@ let activeTabId = null;
 
 const tabManager = new EventEmitter();
 
-console.log('Jaxcore extension ready');
+const EXTENSION_VERSION = '0.0.1';
 
-// var isSocketConnected = false;
-// // var spinSocket;
-// // var contentPort;
-// var spinStore;
-// const spinSocketListener = new EventEmitter();
-//
-// function disconnectSocket(socket, callback) {
-//
-// 	if (socket) {
-//
-// 		isSocketConnected = false;
-// 		socket.on('disconnect', () => {
-//
-// 			spinSocketListener.emit('disconnect', spinSocket);
-//
-// 			console.log('Socket disconnect() callback');
-// 			callback();
-// 		});
-// 		socket.disconnect();
-// 	}
-// 	else callback();
-// }
+console.log('Jaxcore extension ready');
 
 const postMessage = (port, msg) => {
 	if (isPortActiveTab(port)) {
@@ -43,9 +22,7 @@ function connectPortSocket(port, onConnect, onDisconnect) {
 	
 	var socketPort = 37524;
 	console.log('connecting port ' + socketPort + ' ...');
-	//console.log(port);
 	
-	/* Connects to the socket server */
 	var socket = io.connect('http://localhost:' + socketPort, {
 		reconnection: true
 	});
@@ -128,8 +105,6 @@ function connectPortSocket(port, onConnect, onDisconnect) {
 	socket.on('connect', () => {
 		
 		socket._didConnect = true;
-		
-		// isSocketConnected = true;
 		console.log('Socket connected');
 		
 		console.log('turn off reconnect');
@@ -171,93 +146,8 @@ function connectPortSocket(port, onConnect, onDisconnect) {
 		});
 		
 		onDisconnect();
-		
-		// if (socket._didConnect) {
-		//
-		// }
-		// else {
-		// 	console.log('socket reconnect manual');
-		// 	socket.connect(function() {
-		// 		console.log('manually reconnected');
-		// 	});
-		// }
 	});
-	
-	// console.log('emit get-spin-store 1');
-	// socket.emit('get-spin-store');
 }
-
-// var connectingSocket = false;
-// function connectSocket() {
-// 	if (connectingSocket) return;
-// 	connectingSocket = true;
-// 	connect(() => {
-// 		console.log('connected socket');
-// 		sendResponse({connectedExtension: true});
-// 	}, () => {
-// 		console.log('diconnected socket');
-// 	});
-// }
-
-// function listenSpinSocket(callback, postMessage, onDisconnect) {
-// 	if (!spinSocket) {
-// 		console.log('no spin socket');
-// 		return;
-// 	}
-//
-// 	const onStore = (store) => {
-// 		console.log('BG GOT spin-store', store);
-// 		postMessage({
-// 			spinStore: store
-// 		});
-// 	};
-// 	const onCreated = (id, state) => {
-// 		console.log('BG GOT spin-created', state);
-// 		postMessage({
-// 			spinId: id,
-// 			spinCreated: state
-// 		});
-// 	};
-// 	const onUpdate = (id, state) => {
-// 		console.log('BG GOT spin-update', state);
-// 		postMessage({
-// 			spinId: id,
-// 			spinUpdate: state
-// 		});
-// 	};
-// 	const onDestroyed = (id, state) => {
-// 		console.log('BG GOT spin-destroyed', state);
-// 		postMessage({
-// 			spinId: id,
-// 			spinDestroyed: state
-// 		});
-// 	};
-//
-// 	spinSocket.on('spin-store', onStore);
-// 	spinSocket.on('spin-created', onCreated);
-// 	spinSocket.on('spin-update', onUpdate);
-// 	spinSocket.on('spin-destroyed', onDestroyed);
-//
-// 	const onDis = function() {
-//
-// 		console.log('DISCSSSSSCONNECCCCTTTTTT');
-// 		debugger;
-//
-// 		spinSocket.removeListener('spin-store', onStore);
-// 		spinSocket.removeListener('spin-created', onCreated);
-// 		spinSocket.removeListener('spin-update', onUpdate);
-// 		spinSocket.removeListener('spin-destroyed', onDestroyed);
-// 		//isSocketConnected = false;
-//
-// 		spinSocket.removeListener(onDis);
-//
-// 		onDisconnect();
-// 	};
-//
-// 	spinSocket.on('disconnect', onDis);
-//
-// 	callback(onDis);
-// }
 
 
 function onPortConnect(port) {
@@ -365,12 +255,21 @@ chrome.runtime.onMessage.addListener(function (request, sender, _sendResponse) {
 			});
 			return;
 		}
+		
+		if (request.getExtensionState) {
+			// request from Popup
+			sendResponse({
+				extensionFound: true,
+				extensionVersion: EXTENSION_VERSION,
+			});
+		}
+		
 		if (request.getSpinStore) {
 			//if (spinStore) {
-				sendResponse({
-					isSocketConnected,
-					spinStore
-				});
+			// 	sendResponse({
+			// 		isSocketConnected,
+			// 		spinStore
+			// 	});
 				
 				// spinSocket.once('spin-store', function (data) {
 				// 	const store = JSON.parse(data);
@@ -492,7 +391,7 @@ function updateSpinIcon(state) {
 chrome.runtime.onInstalled.addListener(function() {
 	setIcon();
 	
-	setInterval(updateSpinIcon, 2000);
+	// setInterval(updateSpinIcon, 2000);
 });
 
 

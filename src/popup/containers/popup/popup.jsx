@@ -22,7 +22,9 @@ class Popup extends Component {
 			isSocketConnected: false,
 			isPortConnected: false,
 			connecting: false,
-			spinStore: null
+			spinStore: null,
+			extensionVersion: null,
+			extensionFound: false
 		};
 		
 		this.bgPort = null;
@@ -31,7 +33,7 @@ class Popup extends Component {
 	
 	componentDidMount() {
 		this.getSocketState(() => {
-			this.getSpinStore();
+			// this.getSpinStore();
 		});
 	}
 	
@@ -47,29 +49,20 @@ class Popup extends Component {
 	
 	renderContent() {
 		if (this.state.loading) {
-			return (<div id="popupcontainer">xloading...
-				
-				{/*<div>*/}
-				{/*Port: {this.state.isPortConnected.toString()}<br/>*/}
-				{/*Socket: {this.state.isSocketConnected.toString()}<br/>*/}
-				{/*connecting: {this.state.connecting.toString()}*/}
-				{/*</div>*/}
+			return (<div id="popupcontainer">
+				loading ...
 			</div>);
 		} else {
 			return (<div id="popupcontainer">
 				<div>
-					{/*Port: {this.state.isPortConnected.toString()}*/}
-					{/*<button onClick={e => this.toggleConnectPort()}>*/}
-					{/*{this.getConnectPortLabel()}*/}
-					{/*</button>*/}
-					{/*<br/>*/}
-					{/*{this.state.isSocketConnected.toString()}*/}
-					Desktop App:
-					<button onClick={e => this.toggleConnectSocket()}>
-						{this.getConnectSocketLabel()}
-					</button>
+					Jaxcore {this.state.extensionVersion}
 				</div>
-				{this.renderSpins()}
+				
+				<div>
+					<br/>
+					Loaded
+				</div>
+				{/*{this.renderSpins()}*/}
 			
 			</div>);
 		}
@@ -77,13 +70,17 @@ class Popup extends Component {
 	
 	
 	getSocketState(cb) {
-		chrome.runtime.sendMessage({getSocketState: true}, (response) => {
+		debugger;
+		
+		chrome.runtime.sendMessage({getExtensionState: true}, (response) => {
 			console.log('getSocketState response', response);
 			if (response) {
 				this.setState({
-					isSocketConnected: response.isSocketConnected,
+					extensionFound: response.extensionFound,
+					extensionVersion: response.extensionVersion,
 					loading: false
 				});
+				debugger;
 				
 				if (cb) cb();
 				// if (response.isSocketConnected) {
@@ -93,59 +90,76 @@ class Popup extends Component {
 				debugger;
 			}
 		});
-	}
-	
-	toggleConnectSocket() {
-		console.log('toggleConnectSocket');
-		if (this.state.isSocketConnected) {
-			this.sendSocketDisonnect();
-		} else {
-			this.sendSocketConnect();
-		}
-	}
-	
-	sendSocketConnect() {
-		
-		chrome.runtime.sendMessage({doConnectSocket: true}, (response) => {
-			console.log('doConnectSocket response', response);
-			if (response) {
-				this.setState({
-					isSocketConnected: response.isSocketConnected
-				});
-				
-				debugger;
-			} else {
-				debugger;
-				setTimeout(() => {
-					this.getSpinStore();
-				}, 1000)
-			}
-		});
-		// chrome.runtime.sendMessage({connectSocket: true}, (response) => {
-		// 	if (!response) {
-		// 		console.log('sendSocketConnect');
+		// chrome.runtime.sendMessage({getSocketState: true}, (response) => {
+		// 	console.log('getSocketState response', response);
+		// 	if (response) {
+		// 		this.setState({
+		// 			isSocketConnected: response.isSocketConnected,
+		// 			loading: false
+		// 		});
+		//
+		// 		if (cb) cb();
+		// 		// if (response.isSocketConnected) {
+		// 		// 	this.getSpinState();
+		// 		// }
+		// 	} else {
 		// 		debugger;
-		// 		return;
 		// 	}
-		// 	console.log('sendSocketConnect response', response);
-		// 	debugger;
-		// 	this.setState({
-		// 		isSocketConnected: response.isSocketConnected
-		// 	});
 		// });
 	}
 	
-	sendSocketDisonnect() {
-		console.log('sendSocketDisonnect');
-		chrome.runtime.sendMessage({doDisconnectSocket: true}, (response) => {
-			console.log('sendSocketConnect response', response);
-			debugger;
-			this.setState({
-				isSocketConnected: response.isSocketConnected,
-				spinStore: {}
-			});
-		});
-	}
+	// toggleConnectSocket() {
+	// 	console.log('toggleConnectSocket');
+	// 	if (this.state.isSocketConnected) {
+	// 		this.sendSocketDisonnect();
+	// 	} else {
+	// 		this.sendSocketConnect();
+	// 	}
+	// }
+	
+	// sendSocketConnect() {
+	//
+	// 	chrome.runtime.sendMessage({doConnectSocket: true}, (response) => {
+	// 		console.log('doConnectSocket response', response);
+	// 		if (response) {
+	// 			this.setState({
+	// 				isSocketConnected: response.isSocketConnected
+	// 			});
+	//
+	// 			debugger;
+	// 		} else {
+	// 			debugger;
+	//
+	// 			setTimeout(() => {
+	// 				this.getSpinStore();
+	// 			}, 1000)
+	// 		}
+	// 	});
+	// 	// chrome.runtime.sendMessage({connectSocket: true}, (response) => {
+	// 	// 	if (!response) {
+	// 	// 		console.log('sendSocketConnect');
+	// 	// 		debugger;
+	// 	// 		return;
+	// 	// 	}
+	// 	// 	console.log('sendSocketConnect response', response);
+	// 	// 	debugger;
+	// 	// 	this.setState({
+	// 	// 		isSocketConnected: response.isSocketConnected
+	// 	// 	});
+	// 	// });
+	// }
+	
+	// sendSocketDisonnect() {
+	// 	console.log('sendSocketDisonnect');
+	// 	chrome.runtime.sendMessage({doDisconnectSocket: true}, (response) => {
+	// 		console.log('sendSocketConnect response', response);
+	// 		debugger;
+	// 		this.setState({
+	// 			isSocketConnected: response.isSocketConnected,
+	// 			spinStore: {}
+	// 		});
+	// 	});
+	// }
 	
 	getSpinStore() {
 		chrome.runtime.sendMessage({getSpinStore: true}, (response) => {
