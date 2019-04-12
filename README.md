@@ -1,9 +1,10 @@
 # Jaxcore Web Browser Extension
 
-## Install
+## Install (direct install)
 
-todo: publish to extension stores
-
+- [Firefox](https://addons.mozilla.org/en-US/firefox/addon/jaxcore-browser-extension/)
+- Chrome (coming soon)
+- Opera (coming soon)
 
 ## Build From Source
 
@@ -26,7 +27,7 @@ In Opera...
 
 ## Test It Out
 
-With either the [Jaxcore Desktop app]() install, or the headless [Browser Plugin]() service running try the following:
+With either the [Jaxcore Desktop app]() install, or the headless [Browser Plugin](https://github.com/jaxcore/browser-plugin) service running try the following:
 
 [https://jaxcore.github.io/jaxcore-listen/examples/web-demo/](https://jaxcore.github.io/jaxcore-listen/examples/web-demo/)
 
