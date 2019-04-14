@@ -385,11 +385,11 @@ const setIcon = function() {
 function updateSpinIcon(state) {
 	jaxcoreRotateIndex++;
 	if (jaxcoreRotateIndex >= jaxcoreRotateIcons.length) jaxcoreRotateIndex = 0;
-	setIcon();
+	// setIcon();
 }
 
 chrome.runtime.onInstalled.addListener(function() {
-	setIcon();
+	// setIcon();
 	
 	// setInterval(updateSpinIcon, 2000);
 });

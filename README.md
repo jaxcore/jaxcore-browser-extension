@@ -12,7 +12,7 @@
 git clone https://github.com/jaxcore/jaxcore-browser-extension.git
 cd jaxcore-browser-extension
 npm install
-npm run dev
+npm run build
 ```
 
 See the resulting `dev` directory for the 3 extensions for Chrome, Firefox, and Opera.
