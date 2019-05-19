@@ -1,7 +1,7 @@
 {
     "name": "jaxcore-browser-extension",
     "author": "Jaxcore",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "manifest_version": 2,
     "description": "Jaxcore web browser connectivity extension, enabling client-side Speech Recognition and Motion Control of web games and apps",
     "icons": {
