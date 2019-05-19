@@ -134,7 +134,7 @@ window.addEventListener("message", function(event) {
 	// We only accept messages from ourselves  || !event.isTrusted
 	if (event.source !== window) {
 		console.log('!isTrusted', event.source, window);
-		debugger;
+		// debugger;
 		return;
 	}
 	
