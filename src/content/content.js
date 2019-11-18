@@ -49,6 +49,12 @@ console.log('Jaxcore content script loaded new');
 let bgPort = null;
 let isActiveTab = true;
 
+const extensionState = {
+	extensionConnected: false, // window connection between page and page tab content script
+	tabConnected: false,	// port connection between page tab content script and background.js
+	socketConnected: false // socket connection between background.js and desktop jaxco
+};
+
 function disconnectExtension() {
 	if (bgPort) {
 		
@@ -86,9 +92,22 @@ function postMessage(msg) {
 
 function connectExtension(requestPermissions) {
 	console.log('content sending connectExtension to background');
-	debugger;
 	
-	return;
+	extensionState.extensionConnected = true;
+	
+	postHandshake({
+		extensionConnected: true
+	});
+	
+	connectTab(requestPermissions);
+}
+
+function connectTab(requestPermissions) {
+	if (bgPort) {
+		console.log('Content: already connected to bgPort');
+		return;
+	}
+	
 	bgPort = chrome.runtime.connect({
 		name:"port-from-cs"
 	});
@@ -96,14 +115,21 @@ function connectExtension(requestPermissions) {
 	bgPort.onDisconnect.addListener(function() {
 		// console.log('console port onDisconnect');
 		
+		console.log('bgPort disconnected');
+		
 		postMessage({
-			connectedExtension: false
+			extensionConnected: false,
+			bgConnected: false,
+			socketConnected: false
 		});
 		
+		bgPort = null;
 	});
 	
 	bgPort.onMessage.addListener(function(msg) {
-		// console.log("content received from bg", msg);
+		console.log("content received from bg", msg);
+		debugger;
+		return;
 		
 		if (msg.connectedExtension) {
 			
@@ -138,11 +164,11 @@ function connectExtension(requestPermissions) {
 		
 	});
 	
-	
 	bgPort.postMessage({
-		connectExtension: true
+		connectTab: {
+			requestPermissions
+		}
 	});
-	
 }
 
 window.addEventListener("message", function(event) {

@@ -1,17 +1,81 @@
-import io from 'socket.io-client';
+import Jaxcore from 'jaxcore';
 import EventEmitter from 'events';
 
 let activeTabId = null;
-
 const tabManager = new EventEmitter();
 
-const EXTENSION_VERSION = '0.0.3';
+const JAXCORE_EXTENSION_VERSION = '0.0.3';
+const JAXCORE_PROTOCOL_VERSION = 2;
 
 const WEBSOCKET_HOST = 'localhost';
 const WEBSOCKET_PORT = 37524;
 const WEBSOCKET_PROTOCOL = 'http';
 
 console.log('Jaxcore extension starting');
+
+const jaxcore = new Jaxcore();
+
+jaxcore.addPlugin(require('./contentport-plugin'));
+
+// jaxcore.addAdapter('basic', require(''));
+
+jaxcore.on('service-disconnected', (type, device) => {
+	if (type === 'websocketClient') {
+		console.log('websocketClient service-disconnected', type, device.id);
+		debugger;
+		// connectWebSocket();
+	}
+	else {
+		debugger;
+	}
+});
+
+jaxcore.on('service-connected', (type, device) => {
+	if (type === 'websocketClient') {
+		console.log('websocketClient connected', type, device.id);
+		debugger;
+	}
+	else console.log('service-connected', type, device.id);
+});
+
+
+jaxcore.on('device-connected', function(type, device) {
+	if (type === 'websocketSpin') {
+		const spin = device;
+		console.log('websocketSpin connected', spin);
+		
+		debugger;
+		jaxcore.launchAdapter(spin, 'contentPort', {
+		
+		});
+		// jaxcore.launchAdapter(spin, 'contentPort');
+	}
+	else {
+		console.log('device-connected', type);
+		process.exit();
+	}
+});
+
+function connectWebSocket() {
+	jaxcore.connectWebsocket({
+		protocol: 'http',
+		host: WEBSOCKET_HOST,
+		port: WEBSOCKET_PORT,
+		options: {
+			reconnection: true
+		}
+	}, function (err, websocketClient) {
+		if (err) {
+			console.log('websocketClient error', err);
+			process.exit();
+		}
+		else if (websocketClient) {
+			console.log('websocketClient connected');
+		}
+	});
+}
+
+//connectWebSocket();
 
 const postMessage = (port, msg) => {
 	if (isPortActiveTab(port)) {
@@ -153,14 +217,93 @@ function connectPortSocket(port, onConnect, onDisconnect) {
 	});
 }
 
+const contentPorts = {};
+
+function connectTab(port, msg) {
+	let requestPermissions = msg.connectTab.requestPermissions;
+	console.log('connectTab', requestPermissions, port.sender);
+	
+	debugger;
+	return;
+	
+	let id = 'contentPort:'+port.sender.id+':'+port.sender.tab;
+	contentPorts[id] = port;
+	
+	let adapterConfig = {
+		services: {
+			contentPort: {
+				id: port.sender.id,
+				tab: port.sender.tab,
+				url: port.sender.url
+				// sender: port.sender
+				// frameId: 0
+				// id: "ghhecchfkpfibdmodnhjfnchjkbjceib"
+				// tab: {active: true, audible: false, autoDiscardable: true, discarded: false, favIconUrl: "http://localhost:3000/favicon.ico", …}
+				// url: "http://localhost:3000/"
+			},
+			websocketClient: {
+				protocol: 'http',
+				host: WEBSOCKET_HOST,
+				port: WEBSOCKET_PORT,
+				options: {
+					reconnection: true
+				}
+			}
+		}
+	};
+	console.log();
+	debugger;
+	
+	
+	return;
+	
+	connectPortSocket(port, msg,(socket) => {
+		console.log('port socket connected');
+		
+		port.__socket = socket;
+		
+		const _dis = function(event) {
+			console.log('destroy socket');
+			socket.destroy();
+			port.onDisconnect.removeListener(_dis);
+		};
+		port.onDisconnect.addListener(_dis);
+		
+		port.postMessage({
+			connectedExtension: true
+		});
+		
+	}, () => {
+		console.log('port socket disconnected');
+		
+		port.postMessage({
+			connectedExtension: false
+		});
+		
+		port.disconnect();
+	});
+	
+}
 
 function onPortConnect(port) {
 	console.log('onPortConnect', port);
-	return;
+	debugger;
+	
 	
 	function onMessageListener(msg) {
 		console.log('onMessageListener', msg);
 		
+		if ('connectTab' in msg) {
+			console.log(msg.connectTab);
+			connectTab(port, msg);
+			debugger;
+		}
+		else {
+			console.log('bg recieved:', msg);
+			debugger;
+		}
+		
+		return;
 		if (msg.listenCommand) {
 			if (port.__socket) {
 				console.log('listenCommand sending to socket', msg);
@@ -188,32 +331,32 @@ function onPortConnect(port) {
 		else if (msg.connectExtension) {
 			console.log('BG received from content: connectExtension');
 			
-			
-			connectPortSocket(port, (socket) => {
-				console.log('port socket connected');
-				
-				port.__socket = socket;
-				
-				const _dis = function(event) {
-					console.log('destroy socket');
-					socket.destroy();
-					port.onDisconnect.removeListener(_dis);
-				};
-				port.onDisconnect.addListener(_dis);
-				
-				port.postMessage({
-					connectedExtension: true
-				});
-				
-			}, () => {
-				console.log('port socket disconnected');
-				
-				port.postMessage({
-					connectedExtension: false
-				});
-				
-				port.disconnect();
-			});
+			//
+			// connectPortSocket(port, (socket) => {
+			// 	console.log('port socket connected');
+			//
+			// 	port.__socket = socket;
+			//
+			// 	const _dis = function(event) {
+			// 		console.log('destroy socket');
+			// 		socket.destroy();
+			// 		port.onDisconnect.removeListener(_dis);
+			// 	};
+			// 	port.onDisconnect.addListener(_dis);
+			//
+			// 	port.postMessage({
+			// 		connectedExtension: true
+			// 	});
+			//
+			// }, () => {
+			// 	console.log('port socket disconnected');
+			//
+			// 	port.postMessage({
+			// 		connectedExtension: false
+			// 	});
+			//
+			// 	port.disconnect();
+			// });
 		}
 		else {
 			console.log('unhandled message', msg);
@@ -264,7 +407,7 @@ function onPortMessage(request, sender, _sendResponse) {
 			// request from Popup
 			sendResponse({
 				extensionFound: true,
-				extensionVersion: EXTENSION_VERSION,
+				extensionVersion: JAXCORE_EXTENSION_VERSION,
 			});
 		}
 		
