@@ -6,12 +6,11 @@ let activeTabId = null;
 const tabManager = new EventEmitter();
 
 const EXTENSION_VERSION = '0.0.3';
-
 const WEBSOCKET_HOST = 'localhost';
 const WEBSOCKET_PORT = 37524;
 const WEBSOCKET_PROTOCOL = 'http';
 
-console.log('Jaxcore extension starting');
+console.log('Jaxcore extension ready');
 
 const postMessage = (port, msg) => {
 	if (isPortActiveTab(port)) {
@@ -23,9 +22,8 @@ const postMessage = (port, msg) => {
 };
 
 function connectPortSocket(port, onConnect, onDisconnect) {
-	console.log('connecting port ' + WEBSOCKET_PORT + ' ...');
 	
-	return;
+	console.log('connecting port ' + WEBSOCKET_PORT + ' ...');
 	
 	var socket = io.connect(WEBSOCKET_PROTOCOL + '://' + WEBSOCKET_HOST + ':' + WEBSOCKET_PORT, {
 		reconnection: true
@@ -156,7 +154,6 @@ function connectPortSocket(port, onConnect, onDisconnect) {
 
 function onPortConnect(port) {
 	console.log('onPortConnect', port);
-	return;
 	
 	function onMessageListener(msg) {
 		console.log('onMessageListener', msg);
@@ -228,9 +225,10 @@ function onPortConnect(port) {
 	});
 }
 
+chrome.runtime.onConnect.addListener(onPortConnect);
 
 
-function onPortMessage(request, sender, _sendResponse) {
+chrome.runtime.onMessage.addListener(function (request, sender, _sendResponse) {
 	
 	let sendResponse = _sendResponse;
 	
@@ -335,7 +333,6 @@ function onPortMessage(request, sender, _sendResponse) {
 	
 	console.log('onMessage XX', request);
 	
-	
 	if (request.connectExtension) {
 		console.log('background received connectExtension ????');
 		
@@ -351,11 +348,7 @@ function onPortMessage(request, sender, _sendResponse) {
 	else {
 		sendResponse({backgroundResponse: "background says hello"});
 	}
-}
-
-chrome.runtime.onConnect.addListener(onPortConnect); // connection from web page
-chrome.runtime.onMessage.addListener(onPortMessage); // message from web page
-
+});
 
 function isPortActiveTab(port) {
 	return port.sender.tab.id === activeTabId;
@@ -372,6 +365,7 @@ function queryActiveTab() {
 	});
 }
 
+
 function sendMessageActiveTab(msg) {
 	chrome.tabs.query({active: true, currentWindow: true}, function (tabs) {
 		if (tabs.length) {
@@ -382,6 +376,33 @@ function sendMessageActiveTab(msg) {
 	});
 }
 
+// let jaxcoreRotateIcons = [1, "idle", 8, 16, 24];
+// let jaxcoreRotateIndex = 0;
+// const setIcon = function() {
+// 	chrome.browserAction.setIcon({path: 'assets/icons/rotate/' + jaxcoreRotateIcons[jaxcoreRotateIndex] + '.png'});
+// };
+//
+// function updateSpinIcon(state) {
+// 	jaxcoreRotateIndex++;
+// 	if (jaxcoreRotateIndex >= jaxcoreRotateIcons.length) jaxcoreRotateIndex = 0;
+// 	// setIcon();
+// }
+
 chrome.runtime.onInstalled.addListener(function() {
 	setInterval(queryActiveTab, 1000);
+	// setIcon();
+	// setInterval(updateSpinIcon, 2000);
 });
+
+
+// var c = 0;
+// setInterval(function() {
+// 	console.log('background', c++);
+// 	sendMessageActiveTab({
+// 		background: true,
+// 		greeting: "hello",
+// 		count: c
+// 	});
+// }, 5000);
+
+//connect();

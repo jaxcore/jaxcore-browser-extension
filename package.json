@@ -1,6 +1,6 @@
 {
   "name": "jaxcore-browser-extension",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Jaxcore Browser Extension",
   "main": "webpack.config.js",
   "scripts": {

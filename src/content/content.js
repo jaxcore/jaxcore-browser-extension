@@ -42,7 +42,9 @@
 // 	sendResponse({contentScriptResponse: "content says hello"});
 // });
 
-console.log('Jaxcore content script loaded');
+const JAXCORE_PROTOCOL_VERSION = 2;
+
+console.log('Jaxcore content script loaded new');
 
 let bgPort = null;
 let isActiveTab = true;
@@ -60,20 +62,33 @@ function disconnectExtension() {
 	}
 }
 
-function postMessage(msg) {
+function postHandshake(msg) {
 	var data = {
-		'_jaxcore_content': {
-			message: msg,
-			protocol: 1
+		jaxcore: {
+			protocol: JAXCORE_PROTOCOL_VERSION,
+			contentHandshake: msg,
 		}
 	};
 	// console.log('content post', data);
 	window.postMessage(data, window.document.location.protocol+window.document.location.host);
 }
 
-function connectExtension() {
-	// console.log('content sending connectExtension to background');
+function postMessage(msg) {
+	var data = {
+		jaxcore: {
+			contentMessage: msg,
+			protocol: JAXCORE_PROTOCOL_VERSION
+		}
+	};
+	// console.log('content post', data);
+	window.postMessage(data, window.document.location.protocol+window.document.location.host);
+}
+
+function connectExtension(requestPermissions) {
+	console.log('content sending connectExtension to background');
+	debugger;
 	
+	return;
 	bgPort = chrome.runtime.connect({
 		name:"port-from-cs"
 	});
@@ -82,8 +97,9 @@ function connectExtension() {
 		// console.log('console port onDisconnect');
 		
 		postMessage({
-			connectedExtension: false,
+			connectedExtension: false
 		});
+		
 	});
 	
 	bgPort.onMessage.addListener(function(msg) {
@@ -97,7 +113,7 @@ function connectExtension() {
 			});
 		}
 		
-		else if ('isActiveTab' in msg) { // activeTab is sent along with .spinStore
+		else if ('isActiveTab' in msg) {
 			if (msg.isActiveTab !== isActiveTab) {
 				isActiveTab = msg.isActiveTab;
 				// console.log('isActiveTab');
@@ -107,20 +123,21 @@ function connectExtension() {
 			}
 		}
 		
-		else if (msg.spin) { // spin data from bg
-			console.log('got spin store content', msg);
-			//debugger;
-			postMessage(msg);
-		}
-		
-		else if (msg.listen) { // listen data from bg
-			console.log('got listen content', msg);
-			// debugger;
-			postMessage(msg);
-		}
+		// else if (msg.spin) { // spin data from bg
+		// 	console.log('got spin store content', msg);
+		// 	//debugger;
+		// 	postMessage(msg);
+		// }
+		//
+		// else if (msg.listen) { // listen data from bg
+		// 	console.log('got listen content', msg);
+		// 	// debugger;
+		// 	postMessage(msg);
+		// }
 		
 		
 	});
+	
 	
 	bgPort.postMessage({
 		connectExtension: true
@@ -129,63 +146,92 @@ function connectExtension() {
 }
 
 window.addEventListener("message", function(event) {
-	// console.log('content on message', event.data);
 	
-	// We only accept messages from ourselves  || !event.isTrusted
+	
 	if (event.source !== window) {
 		console.log('!isTrusted', event.source, window);
-		// debugger;
+		debugger;
 		return;
 	}
 	
-	
-	if (event.data._jaxcore_client) {
-		console.log('content received message', event);
+	if (event.data.jaxcore) {
+		if (event.data.jaxcore.protocol !== JAXCORE_PROTOCOL_VERSION) {
+			console.error('JAXCORE PROTOCOL MISMATCH, REQUIRE PROTOCOL ',PROTOCOL_VERSION);
+			return;
+		}
 		
-		var msg = event.data._jaxcore_client.message;
-		
-		// if (msg.socketDisconnected) {
-		// 	console.log('content got socketDisconnected');
-		// 	disconnectExtension();
-		// }
-	
-		if (msg.spinCommand) { // spin command to bg
-			if (bgPort) {
-				console.log('spinCommand sending to bg port', msg);
-				bgPort.postMessage(msg);
+		console.log('content script received', event.data);
+		// debugger;
+		if ('extensionHandshake' in event.data.jaxcore) {
+			if ('connectExtension' in event.data.jaxcore.extensionHandshake) {
+				if ('requestPermissions' in event.data.jaxcore.extensionHandshake.connectExtension) {
+					console.log('content requestPermissions', event.data.jaxcore.extensionHandshake.connectExtension.requestPermissions);
+					debugger;
+					connectExtension(event.data.jaxcore.extensionHandshake.connectExtension.requestPermissions);
+				}
 			}
-			else {
-				console.log('spinCommand no bgport');
+			else if ('disconnectExtension' in event.data.jaxcore.extensionHandshake) {
+				console.log('disconnectExtension');
 				debugger;
-			}
-			// postMessage(msg);
-		}
-		else if (msg.listenCommand) {
-			if (bgPort) {
-				console.log('listenCommand sending to bg port', msg.listenCommand);
-				bgPort.postMessage(msg);
-			}
-			else {
-				console.log('listenCommand no bgport');
-				// debugger;
+				disconnectExtension();
 			}
 		}
-		else if (msg.disconnectExtension) {
-			// console.log('content got disconnectExtension');
-			disconnectExtension();
-		}
-		else if (msg.connectExtension) {
-			// console.log('content got connectExtension');
-			connectExtension();
-		}
-		// else if (event.data.type && (event.data.type == "FROM_PAGE")) {
-		// 	console.log("Content script received message: " + event.data.text);
-		// 	debugger;
-		// }
-		else {
-			console.log('content unhandled msg x', msg);
+		else if ('extensionMessage' in event.data.jaxcore) {
+			// if ('spin' in event.data.jaxcore.device) {
+			// 	console.log('content spin message', event.data.jaxcore.device.spin);
+			// 	debugger;
+			// }
 			debugger;
 		}
+		else {
+			// debugger;
+		}
+		
+		
+		// var msg = event.data.jaxcore.message;
+		//
+		// // if (msg.socketDisconnected) {
+		// // 	console.log('content got socketDisconnected');
+		// // 	disconnectExtension();
+		// // }
+		//
+		// if (msg.spinCommand) { // spin command to bg
+		// 	if (bgPort) {
+		// 		console.log('spinCommand sending to bg port', msg);
+		// 		bgPort.postMessage(msg);
+		// 	}
+		// 	else {
+		// 		console.log('spinCommand no bgport');
+		// 		debugger;
+		// 	}
+		// 	// postMessage(msg);
+		// }
+		// else if (msg.listenCommand) {
+		// 	if (bgPort) {
+		// 		console.log('listenCommand sending to bg port', msg.listenCommand);
+		// 		bgPort.postMessage(msg);
+		// 	}
+		// 	else {
+		// 		console.log('listenCommand no bgport');
+		// 		// debugger;
+		// 	}
+		// }
+		// else if (msg.disconnectExtension) {
+		// 	// console.log('content got disconnectExtension');
+		// 	disconnectExtension();
+		// }
+		// else if (msg.connectExtension) {
+		// 	// console.log('content got connectExtension');
+		// 	connectExtension();
+		// }
+		// // else if (event.data.type && (event.data.type == "FROM_PAGE")) {
+		// // 	console.log("Content script received message: " + event.data.text);
+		// // 	debugger;
+		// // }
+		// else {
+		// 	console.log('content unhandled msg x', msg);
+		// 	debugger;
+		// }
 	}
 	else {
 		// console.log('not _jaxcore_client', event.data);
@@ -193,8 +239,8 @@ window.addEventListener("message", function(event) {
 });
 
 setTimeout(function() {
-	console.log('Jaxcore content script ready');
-	postMessage({
+	console.log('CONTENT sending extensionReady');
+	postHandshake({
 		extensionReady: true
 	});
 },1);
