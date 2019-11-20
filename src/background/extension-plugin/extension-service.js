@@ -9,21 +9,36 @@ const schema = {
 	connected: {
 		type: 'boolean'
 	},
-	activeTabId: {
+	activePort: {
 		type: 'string'
+	},
+	contentPrivileges: {
+		type: 'object'
+	},
+	websocketClientConnected: {
+		type: 'boolean'
 	}
 };
 
 let instance = null;
 let jaxcore = null;
 
+let extensionWebsocketClient = null;
+
 function connectWebSocket(jaxcore, host, port) {
+	if (extensionWebsocketClient) {
+		console.log('extensionWebsocketClient exists');
+		debugger;
+		return;
+	}
+	
 	jaxcore.connectWebsocket({
 		protocol: 'http',
 		host: host,
 		port: port,
 		options: {
-			reconnection: true
+			reconnection: true,
+			pingTimeout: 120000
 		}
 	}, function (err, websocketClient) {
 		if (err) {
@@ -33,6 +48,7 @@ function connectWebSocket(jaxcore, host, port) {
 		}
 		else if (websocketClient) {
 			// debugger;
+			// extensionWebsocketClient = websocketClient;
 			console.log('websocketClient connected');
 		}
 	});
@@ -44,26 +60,41 @@ class ExtensionService extends Service {
 		this.log = createLogger('ExtensionService');
 		this.log('create', defaults);
 		
-		
-		jaxcore.on('service-connected', (type, device) => {
+		const onConnect = (type, device) => {
 			if (type === 'websocketClient') {
+				let websocketClient = device;
+				extensionWebsocketClient = websocketClient;
+				
 				console.log('websocketClient connected', type, device.id);
 				// debugger;
+				this.setState({
+					websocketClientConnected: true
+				});
+				this.emit('websocketclient-connect', device.id);
 			}
 			else console.log('service-connected', type, device.id);
-		});
+		};
 		
-		jaxcore.on('service-disconnected', (type, device) => {
+		const onDisconnect = (type, device) => {
 			if (type === 'websocketClient') {
 				console.log('websocketClient service-disconnected', type, device.id);
+				this.setState({
+					websocketClientConnected: false
+				});
+				this.emit('websocketclient-disconnect', device.id);
+				this.log('RECONNECTING connectWebSocket again', this.state.host, this.state.port);
+				
+				extensionWebsocketClient = null;
 				// debugger;
-				this.log('connectWebSocket again', this.state.host, this.state.port);
 				connectWebSocket(jaxcore, this.state.host, this.state.port);
 			}
 			else {
 				debugger;
 			}
-		});
+		};
+		
+		jaxcore.on('service-connected', onConnect);
+		jaxcore.on('service-disconnected', onDisconnect);
 		
 		this.log('connectWebSocket', this.state.host, this.state.port);
 		// debugger;
@@ -88,8 +119,70 @@ class ExtensionService extends Service {
 		this.emit('teardown');
 	}
 	
+	setActivePort(contentPortId) {
+		this.log('setActivePort', contentPortId);
+		if (this.state.activePortId === contentPortId) {
+			debugger;
+			return;
+		}
+		if (this.state.activePortId) {
+			this.setState({
+				activePortId: null
+			});
+			this.activePort = null;
+			// this.emit(this.state.activePortId+':deactivated');
+		}
+		
+		if (contentPortId) {
+			this.setState({
+				activePortId: contentPortId
+			});
+			
+			// this.emit(this.state.activePortId + ':activated');
+			// debugger;
+		}
+		// this.emit('port-activated', contentPort.id);
+	}
+	
+	getSpinStore() { // ToActivePort
+		let store = {};
+		for (let id in jaxcore.deviceClasses.websocketSpin.spinIds) {
+			if (jaxcore.deviceClasses.websocketSpin.spinIds[id].state.connected) {
+				store[id] = jaxcore.deviceClasses.websocketSpin.spinIds[id].state;
+				// debugger;
+				// this.emit(this.state.activePortId + ':spin-update', id, jaxcore.deviceClasses.websocketSpin.spinIds[id].state);
+			}
+		}
+		return store;
+	}
+	
+	connectTab(contentPortId, requestedPrivileges) {
+		
+		debugger;
+		this.setActivePort(contentPortId);
+		const grantedPrivileges = requestedPrivileges;
+		
+		this.state.contentPrivileges[contentPortId] = grantedPrivileges;
+		
+		this.emit(this.state.activePortId+':connected', {
+			grantedPrivileges,
+			websocketConnected: this.state.websocketClientConnected
+		});
+	}
+	
+	// portConnected(contentPortId) {
+	// 	console.log('DELETE THIS?');
+	// 	// this.log('websocketSpin', jaxcore.stores.devices['websocketSpin']);
+	// 	debugger;
+	//
+	// 	// for (let id in jaxcore.stores.devices['websocketSpin']) {
+	//
+	//
+	// }
+	
 	spinUpdate(id, changes) {
 		console.log('ExtensionService spin update', id, changes);
+		this.emit(this.state.activePort + ':spin-update', id, changes);
 	}
 	
 	static id() {

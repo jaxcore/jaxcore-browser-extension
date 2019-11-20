@@ -19,7 +19,6 @@ jaxcore.on('device-connected', function(type, device) {
 	if (type === 'contentPort') {
 		const contentPort = device;
 		console.log('contentPort connected', contentPort);
-		debugger;
 		jaxcore.launchAdapter(contentPort, 'contentPortExtension');
 	}
 	else if (type === 'websocketSpin') {

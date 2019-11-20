@@ -22,7 +22,7 @@ class ExtensionSpinAdapter extends Adapter {
 		this.addEvents(spin, {
 			update: function(changes) {
 				this.log('spin update to extensionSevice', changes);
-				extension.spinUpdate(changes);
+				extension.spinUpdate(spin.id, changes);
 			}
 		});
 	}

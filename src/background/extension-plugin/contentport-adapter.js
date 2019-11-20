@@ -10,28 +10,78 @@ class ContentPortAdapter extends Adapter {
 	constructor(store, config, theme, devices, services) {
 		super(store, config, theme, devices, services);
 		const {contentPort} = devices;
-		const {extensionSevice} = services;
+		const {extension} = services;
+		
+		// extension.portConnected(contentPort.id);
+		
+		// extension.getPermissions(contentPort.id);
+		// let spinStore = extension.getSpinStore();
+		
+		let contentPortId = contentPort.id;
 		
 		this.addEvents(contentPort, {
-			spinCommand: function(command) {
+			connectTab: function (requestedPrivileges) {
+				this.log('contentPort connectTab', 'requestedPrivileges', requestedPrivileges);
+				debugger;
+				extension.connectTab(contentPortId, requestedPrivileges);
+				debugger;
+			},
+			spinCommand: function (command) {
 				this.log('contentPort change', changes);
-				contentPort.spinUpdate(command);
+				extension.spinCommand(command);
 			}
 		});
 		
-		this.addEvents(spin, {
-			update: function(changes) {
-				this.log('websocketClient change', changes);
-				contentPort.spinUpdate(changes);
+		const extensionEvents = {
+			spinUpdate: function (id, changes) {
+				this.log('received spin-update from extension service', id, changes);
+				contentPort.spinUpdate(id, changes);
+			},
+			'websocketclientConnect': function (websocketClientId) {
+				debugger;
+				contentPort.websocketConnected(true, websocketClientId);
+			},
+			'websocketclientDisconnect': function (websocketClientId) {
+				debugger;
+				contentPort.websocketConnected(false, websocketClientId);
 			}
-		});
+		};
+		
+		let connectedEvent = contentPortId + ':connected';
+		extensionEvents[connectedEvent] = function (msg) {
+			const grantedPrivileges = msg.grantedPrivileges;
+			const websocketConnected = msg.websocketConnected;
+			console.log('port connected', msg);
+			contentPort.setConnected(true, {
+				grantedPrivileges,
+				websocketConnected
+			});
+			debugger;
+		};
+		// extension.portConnected(contentPort.id);
+		
+		let activatedEvent = contentPortId + ':activated';
+		extensionEvents[activatedEvent] = function () {
+			console.log('port activated', contentPortId);
+			contentPort.setActive(true);
+			debugger;
+		};
+		
+		let deactivatedEvent = contentPortId + ':dectivated';
+		extensionEvents[deactivatedEvent] = function () {
+			console.log('port deactivated', contentPortId);
+			contentPort.setActive(false);
+			debugger;
+		};
+		this.addEvents(extension, extensionEvents);
 	}
 	
 	static getServicesConfig(adapterConfig) {
 		console.log('ContentPortAdapter adapterConfig', adapterConfig);
-		debugger;
+		// debugger;
 		return {
-			contentPort: adapterConfig.settings.services.contentPort,
+			extension: true
+			// contentPort: adapterConfig.settings.services.contentPort,
 			// websocketClient: adapterConfig.settings.services.websocketClient
 		};
 	}

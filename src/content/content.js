@@ -69,9 +69,10 @@ function disconnectExtension() {
 	}
 }
 
-function postHandshake(msg) {
+function postHandshakeToWinow(msg) {
 	var data = {
 		jaxcore: {
+			jaxcoreVersion: JAXCORE_EXTENSION_VERSION,
 			protocol: JAXCORE_PROTOCOL_VERSION,
 			contentHandshake: msg,
 		}
@@ -83,27 +84,24 @@ function postHandshake(msg) {
 function postMessage(msg) {
 	var data = {
 		jaxcore: {
+			jaxcoreVersion: JAXCORE_EXTENSION_VERSION,
+			protocol: JAXCORE_PROTOCOL_VERSION,
 			contentMessage: msg,
-			protocol: JAXCORE_PROTOCOL_VERSION
 		}
 	};
 	// console.log('content post', data);
 	window.postMessage(data, window.document.location.protocol+window.document.location.host);
 }
 
-function connectExtension(requestPermissions) {
+function connectExtension(requestPrivileges) {
 	console.log('content sending connectExtension to background');
 	
-	extensionState.extensionConnected = true;
+	// extensionState.extensionConnected = true;
+	//
+	// postHandshakeToWinow({
+	// 	extensionConnected: true
+	// });
 	
-	postHandshake({
-		extensionConnected: true
-	});
-	
-	connectTab(requestPermissions);
-}
-
-function connectTab(requestPermissions) {
 	if (bgPort) {
 		console.log('Content: already connected to bgPort');
 		return;
@@ -118,6 +116,7 @@ function connectTab(requestPermissions) {
 		
 		console.log('bgPort disconnected');
 		
+		debugger;
 		postMessage({
 			extensionConnected: false,
 			bgConnected: false,
@@ -128,8 +127,56 @@ function connectTab(requestPermissions) {
 	});
 	
 	bgPort.onMessage.addListener(function(msg) {
-		console.log("content received from bg", msg);
-		debugger;
+		console.log("content received from contentPortDevice", msg);
+		
+		if ('spinUpdate' in msg) {
+			console.log('GOT SPIN UPDATE----------', msg);
+		}
+		
+		if ('extensionConnected' in msg) {
+			debugger;
+			// const grantedPrivileges = msg.extensionConnected.grantedPrivileges;
+			// const websocketConnected = msg.extensionConnected.websocketConnected;
+			// const portActive = msg.extensionConnected.portActive;
+			// debugger;
+			// postHandshakeToWinow({
+			// 	extensionConnected: {
+			// 		grantedPrivileges,
+			// 		websocketConnected,
+			// 		portActive
+			// 	}
+			// });
+		}
+		
+		if ('portConnected' in msg) {
+			console.log('CONTENT SCRIPT portConnected', msg);
+			debugger;
+			postHandshakeToWinow({	// post to window
+				portConnected: msg.portConnected,
+				portActive: msg.portActive,
+				grantedPrivileges: msg.grantedPrivileges,
+				websocketConnected: msg.websocketConnected
+			});
+		}
+		else {
+			if ('portActive' in msg) {
+				postHandshakeToWinow({	// post to window
+					portActive: msg.portActive
+				});
+			}
+		}
+		
+		if ('websocket' in msg) {
+			let websocketClientId = msg.websocket.id;
+			console.log('websocket', 'websocketClientId='+websocketClientId, msg);
+			debugger;
+			postHandshakeToWinow({
+				websocketConnected: msg.websocket.connected
+			});
+		}
+		
+		
+		
 		return;
 		
 		if (msg.connectedExtension) {
@@ -167,7 +214,7 @@ function connectTab(requestPermissions) {
 	
 	bgPort.postMessage({
 		connectTab: {
-			requestPermissions
+			requestPrivileges
 		}
 	});
 }
@@ -191,10 +238,9 @@ window.addEventListener("message", function(event) {
 		// debugger;
 		if ('pageHandshake' in event.data.jaxcore) {
 			if ('connectExtension' in event.data.jaxcore.pageHandshake) {
-				if ('requestPermissions' in event.data.jaxcore.pageHandshake.connectExtension) {
-					console.log('content requestPermissions', event.data.jaxcore.pageHandshake.connectExtension.requestPermissions);
-					debugger;
-					connectExtension(event.data.jaxcore.pageHandshake.connectExtension.requestPermissions);
+				if ('requestPrivileges' in event.data.jaxcore.pageHandshake.connectExtension) {
+					console.log('content requestPrivileges', event.data.jaxcore.pageHandshake.connectExtension.requestPrivileges);
+					connectExtension(event.data.jaxcore.pageHandshake.connectExtension.requestPrivileges);
 				}
 			}
 			else if ('disconnectExtension' in event.data.jaxcore.pageHandshake) {
@@ -267,7 +313,7 @@ window.addEventListener("message", function(event) {
 
 setTimeout(function() {
 	console.log('CONTENT sending extensionReady');
-	postHandshake({
+	postHandshakeToWinow({
 		extensionReady: true
 	});
 },1);
