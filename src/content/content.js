@@ -42,6 +42,7 @@
 // 	sendResponse({contentScriptResponse: "content says hello"});
 // });
 
+const JAXCORE_EXTENSION_VERSION = '0.0.3';
 const JAXCORE_PROTOCOL_VERSION = 2;
 
 console.log('Jaxcore content script loaded new');
@@ -188,21 +189,21 @@ window.addEventListener("message", function(event) {
 		
 		console.log('content script received', event.data);
 		// debugger;
-		if ('extensionHandshake' in event.data.jaxcore) {
-			if ('connectExtension' in event.data.jaxcore.extensionHandshake) {
-				if ('requestPermissions' in event.data.jaxcore.extensionHandshake.connectExtension) {
-					console.log('content requestPermissions', event.data.jaxcore.extensionHandshake.connectExtension.requestPermissions);
+		if ('pageHandshake' in event.data.jaxcore) {
+			if ('connectExtension' in event.data.jaxcore.pageHandshake) {
+				if ('requestPermissions' in event.data.jaxcore.pageHandshake.connectExtension) {
+					console.log('content requestPermissions', event.data.jaxcore.pageHandshake.connectExtension.requestPermissions);
 					debugger;
-					connectExtension(event.data.jaxcore.extensionHandshake.connectExtension.requestPermissions);
+					connectExtension(event.data.jaxcore.pageHandshake.connectExtension.requestPermissions);
 				}
 			}
-			else if ('disconnectExtension' in event.data.jaxcore.extensionHandshake) {
+			else if ('disconnectExtension' in event.data.jaxcore.pageHandshake) {
 				console.log('disconnectExtension');
 				debugger;
 				disconnectExtension();
 			}
 		}
-		else if ('extensionMessage' in event.data.jaxcore) {
+		else if ('pageMessage' in event.data.jaxcore) {
 			// if ('spin' in event.data.jaxcore.device) {
 			// 	console.log('content spin message', event.data.jaxcore.device.spin);
 			// 	debugger;

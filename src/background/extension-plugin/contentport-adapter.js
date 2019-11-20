@@ -9,8 +9,8 @@ class ContentPortAdapter extends Adapter {
 	
 	constructor(store, config, theme, devices, services) {
 		super(store, config, theme, devices, services);
-		const {spin} = devices;
-		const {contentPort} = services;
+		const {contentPort} = devices;
+		const {extensionSevice} = services;
 		
 		this.addEvents(contentPort, {
 			spinCommand: function(command) {
