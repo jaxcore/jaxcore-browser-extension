@@ -116,18 +116,18 @@ function connectExtension(requestPrivileges) {
 		
 		console.log('bgPort disconnected');
 		
-		// debugger;
 		postHandshakeToWinow({
 			portConnected: false,
 			portActive: false,
 			grantedPrivileges: null,
-			websocketConnected: false
-			
+			websocketConnected: false,
+			reconnect: true
 			// bgConnected: false,
 			// socketConnected: false
 		});
 		
 		bgPort = null;
+		// extension context is invalidated at this point, page reload is necessary
 	});
 	
 	bgPort.onMessage.addListener(function(msg) {

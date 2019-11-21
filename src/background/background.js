@@ -30,6 +30,12 @@ jaxcore.on('device-connected', function(type, device) {
 		debugger;
 	}
 });
+jaxcore.on('device-disconnected', function(type, device) {
+	if (type === 'contentPort') {
+		console.log('content port disconnected', device);
+		debugger;
+	}
+});
 
 jaxcore.startService('extension', null, null, {
 	host: WEBSOCKET_HOST,

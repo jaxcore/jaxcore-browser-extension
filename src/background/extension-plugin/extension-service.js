@@ -9,7 +9,7 @@ const schema = {
 	connected: {
 		type: 'boolean'
 	},
-	activePort: {
+	activePortId: {
 		type: 'string'
 	},
 	contentPrivileges: {
@@ -117,25 +117,26 @@ class ExtensionService extends Service {
 			chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
 				if (tabs.length) {
 					let activeTabId = tabs[0].id;
-					this.log('activeTabId', activeTabId);
 					if (this.state.activeTabId !== activeTabId) {
 						if (activeTabId in this.tabsToContentPortId) {
+							this.log('activeTabId', activeTabId);
 							const contentPortId = this.tabsToContentPortId[activeTabId];
 							this.setState({
 								activeTabId
 							});
-							
-							this.log('setting active tab null', contentPortId);
+							// this.log('setting active tab to', contentPortId);
 							this.setActivePort(contentPortId);
 							// this.emit('active-tab', activeTabId);
 						}
 						else {
-							this.setState({
-								activeTabId: null
-							});
-							// active tab is not connected
-							this.log('active tab is not a jaxcore tab', this.tabsToContentPortId);
-							this.setActivePort(null);
+							if (this.state.activeTabId !== null) {
+								this.setState({
+									activeTabId: null
+								});
+								// active tab is not connected
+								// this.log('active tab is not a jaxcore tab', this.tabsToContentPortId);
+								this.setActivePort(null);
+							}
 						}
 					}
 				}
@@ -156,11 +157,12 @@ class ExtensionService extends Service {
 	}
 	
 	setActivePort(contentPortId) {
-		this.log('setActivePort', contentPortId);
 		if (this.state.activePortId === contentPortId) {
 			// debugger;
 			return;
 		}
+		
+		this.log('setActivePort', contentPortId);
 		
 		if (this.state.activePortId) {
 			let activePortId = this.state.activePortId;
@@ -227,7 +229,8 @@ class ExtensionService extends Service {
 	
 	spinUpdate(id, changes) {
 		console.log('ExtensionService spin update', id, changes);
-		this.emit(this.state.activePort + ':spin-update', id, changes);
+		this.emit(this.state.activePortId + ':spin-update', id, changes);
+		// todo store contentPort reference and call direclty?
 	}
 	
 	static id() {

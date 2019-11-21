@@ -35,10 +35,10 @@ class ContentPortAdapter extends Adapter {
 		});
 		
 		const extensionEvents = {
-			spinUpdate: function (id, changes) {
-				this.log('received spin-update from extension service', id, changes);
-				contentPort.spinUpdate(id, changes);
-			},
+			// spinUpdate: function (id, changes) {
+			// 	this.log('received spin-update from extension service', id, changes);
+			// 	contentPort.spinUpdate(id, changes);
+			// },
 			'websocketclientConnect': function (websocketClientId) {
 				// debugger;
 				contentPort.websocketConnected(true, websocketClientId);
@@ -48,6 +48,13 @@ class ContentPortAdapter extends Adapter {
 				contentPort.websocketConnected(false, websocketClientId);
 			}
 			
+		};
+		
+		let spinUpdateEvent = contentPortId + ':spin-update';
+		extensionEvents[spinUpdateEvent] = function (id, changes) {
+			this.log('spin update', id, changes);
+			contentPort.spinUpdate(id, changes);
+			// debugger;
 		};
 		
 		let connectedEvent = contentPortId + ':connected';
