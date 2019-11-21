@@ -1,6 +1,6 @@
 const {Adapter} = require('jaxcore-plugin');
 
-class ExtensionSpinAdapter extends Adapter {
+class SpinExtensionAdapter extends Adapter {
 	static getDefaultState() {
 		return {
 		
@@ -28,7 +28,7 @@ class ExtensionSpinAdapter extends Adapter {
 	}
 	
 	static getServicesConfig(adapterConfig) {
-		console.log('ExtensionSpinAdapter adapterConfig', adapterConfig);
+		console.log('SpinExtensionAdapter adapterConfig', adapterConfig);
 		return {
 			extension: true
 			// contentPort: adapterConfig.settings.services.contentPort,
@@ -37,4 +37,4 @@ class ExtensionSpinAdapter extends Adapter {
 	}
 }
 
-module.exports = ExtensionSpinAdapter;
+module.exports = SpinExtensionAdapter;

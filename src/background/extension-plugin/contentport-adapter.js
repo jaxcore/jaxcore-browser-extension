@@ -26,7 +26,13 @@ class ContentPortAdapter extends Adapter {
 				const tabId = contentPort.state.tabId;
 				
 				extension.connectTab(contentPortId, requestedPrivileges, senderId, tabId);
-				// debugger;
+				
+				const spinStore = extension.getSpinStore();
+				// console.log(spinStore);
+				for (let id in spinStore) {
+					// debugger;
+					contentPort.spinUpdate(id, spinStore[id]);
+				}
 			},
 			spinCommand: function (command) {
 				this.log('contentPort change', changes);
