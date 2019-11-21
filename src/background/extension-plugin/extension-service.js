@@ -104,12 +104,6 @@ class ExtensionService extends Service {
 		
 		this.startActiveTabMonitor();
 		
-		
-		// host: WEBSOCKET_HOST,
-		// port: WEBSOCKET_PORT,
-		// jaxcoreVersion: JAXCORE_EXTENSION_VERSION,
-		// protocolVersion: JAXCORE_PROTOCOL_VERSION
-		// jaxcore
 	}
 	
 	startActiveTabMonitor() {

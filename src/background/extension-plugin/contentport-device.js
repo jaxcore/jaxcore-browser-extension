@@ -2,7 +2,7 @@
 
 const {Client, createLogger} = require('jaxcore-plugin');
 
-const log = createLogger('ContentPortService');
+// const log = createLogger('ContentPortService');
 
 const schema = {
 	id: {
