@@ -116,11 +116,15 @@ function connectExtension(requestPrivileges) {
 		
 		console.log('bgPort disconnected');
 		
-		debugger;
-		postMessage({
-			extensionConnected: false,
-			bgConnected: false,
-			socketConnected: false
+		// debugger;
+		postHandshakeToWinow({
+			portConnected: false,
+			portActive: false,
+			grantedPrivileges: null,
+			websocketConnected: false
+			
+			// bgConnected: false,
+			// socketConnected: false
 		});
 		
 		bgPort = null;
@@ -133,24 +137,24 @@ function connectExtension(requestPrivileges) {
 			console.log('GOT SPIN UPDATE----------', msg);
 		}
 		
-		if ('extensionConnected' in msg) {
-			debugger;
-			// const grantedPrivileges = msg.extensionConnected.grantedPrivileges;
-			// const websocketConnected = msg.extensionConnected.websocketConnected;
-			// const portActive = msg.extensionConnected.portActive;
-			// debugger;
-			// postHandshakeToWinow({
-			// 	extensionConnected: {
-			// 		grantedPrivileges,
-			// 		websocketConnected,
-			// 		portActive
-			// 	}
-			// });
-		}
+		// if ('extensionConnected' in msg) {
+		// 	debugger;
+		// 	// const grantedPrivileges = msg.extensionConnected.grantedPrivileges;
+		// 	// const websocketConnected = msg.extensionConnected.websocketConnected;
+		// 	// const portActive = msg.extensionConnected.portActive;
+		// 	// debugger;
+		// 	// postHandshakeToWinow({
+		// 	// 	extensionConnected: {
+		// 	// 		grantedPrivileges,
+		// 	// 		websocketConnected,
+		// 	// 		portActive
+		// 	// 	}
+		// 	// });
+		// }
 		
 		if ('portConnected' in msg) {
 			console.log('CONTENT SCRIPT portConnected', msg);
-			debugger;
+			// debugger;
 			postHandshakeToWinow({	// post to window
 				portConnected: msg.portConnected,
 				portActive: msg.portActive,
@@ -169,7 +173,7 @@ function connectExtension(requestPrivileges) {
 		if ('websocket' in msg) {
 			let websocketClientId = msg.websocket.id;
 			console.log('websocket', 'websocketClientId='+websocketClientId, msg);
-			debugger;
+			// debugger;
 			postHandshakeToWinow({
 				websocketConnected: msg.websocket.connected
 			});

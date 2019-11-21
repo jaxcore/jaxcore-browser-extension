@@ -60,6 +60,8 @@ class ExtensionService extends Service {
 		this.log = createLogger('ExtensionService');
 		this.log('create', defaults);
 		
+		this.tabsToContentPortId = {};
+		
 		const onConnect = (type, device) => {
 			if (type === 'websocketClient') {
 				let websocketClient = device;
@@ -100,11 +102,45 @@ class ExtensionService extends Service {
 		// debugger;
 		connectWebSocket(jaxcore, this.state.host, this.state.port);
 		
+		this.startActiveTabMonitor();
+		
+		
 		// host: WEBSOCKET_HOST,
 		// port: WEBSOCKET_PORT,
 		// jaxcoreVersion: JAXCORE_EXTENSION_VERSION,
 		// protocolVersion: JAXCORE_PROTOCOL_VERSION
 		// jaxcore
+	}
+	
+	startActiveTabMonitor() {
+		setInterval(() => {
+			chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+				if (tabs.length) {
+					let activeTabId = tabs[0].id;
+					this.log('activeTabId', activeTabId);
+					if (this.state.activeTabId !== activeTabId) {
+						if (activeTabId in this.tabsToContentPortId) {
+							const contentPortId = this.tabsToContentPortId[activeTabId];
+							this.setState({
+								activeTabId
+							});
+							
+							this.log('setting active tab null', contentPortId);
+							this.setActivePort(contentPortId);
+							// this.emit('active-tab', activeTabId);
+						}
+						else {
+							this.setState({
+								activeTabId: null
+							});
+							// active tab is not connected
+							this.log('active tab is not a jaxcore tab', this.tabsToContentPortId);
+							this.setActivePort(null);
+						}
+					}
+				}
+			});
+		}, 200);
 	}
 	
 	connect() {
@@ -122,15 +158,18 @@ class ExtensionService extends Service {
 	setActivePort(contentPortId) {
 		this.log('setActivePort', contentPortId);
 		if (this.state.activePortId === contentPortId) {
-			debugger;
+			// debugger;
 			return;
 		}
+		
 		if (this.state.activePortId) {
+			let activePortId = this.state.activePortId;
+			this.log('deactiving tab', activePortId);
 			this.setState({
 				activePortId: null
 			});
 			this.activePort = null;
-			// this.emit(this.state.activePortId+':deactivated');
+			this.emit(activePortId+':deactivated');
 		}
 		
 		if (contentPortId) {
@@ -138,7 +177,7 @@ class ExtensionService extends Service {
 				activePortId: contentPortId
 			});
 			
-			// this.emit(this.state.activePortId + ':activated');
+			this.emit(contentPortId + ':activated');
 			// debugger;
 		}
 		// this.emit('port-activated', contentPort.id);
@@ -156,9 +195,15 @@ class ExtensionService extends Service {
 		return store;
 	}
 	
-	connectTab(contentPortId, requestedPrivileges) {
+	connectTab(contentPortId, requestedPrivileges, senderId, tabId) {
+		this.tabsToContentPortId[tabId] = contentPortId;
+		this.state.activeTabId = tabId;
+		// debugger;
+		/*senderId: port.sender.id,
+		tabId: port.sender.tab.id,
+		url: port.sender.url*/
+		// debugger;
 		
-		debugger;
 		this.setActivePort(contentPortId);
 		const grantedPrivileges = requestedPrivileges;
 		

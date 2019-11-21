@@ -54,7 +54,7 @@ class ContentPortDevice extends Client {
 
 		port.onDisconnect.addListener((event) => {
 			console.log('port.onDisconnect ----------------');
-			debugger;
+			// debugger;
 			port.onMessage.removeListener(this._onMessageListener);
 			this.setState({
 				connected: false
@@ -83,7 +83,7 @@ class ContentPortDevice extends Client {
 		if ('connectTab' in msg) {
 			let requestedPrivileges = msg.connectTab.requestPrivileges;
 			console.log('connectTab requestPrivileges=', requestedPrivileges);
-			debugger;
+			// debugger;
 			this.emit('connect-tab', requestedPrivileges);
 			
 			let websocketConnected = this.state.websocketConnected;
@@ -211,7 +211,7 @@ class ContentPortDevice extends Client {
 	}
 	
 	websocketConnected(connected, websocketClientId) {
-		debugger;
+		// debugger;
 		
 		this.setState({
 			websocketConnected: connected,
@@ -246,157 +246,8 @@ class ContentPortDevice extends Client {
 		return 'cp:'+serviceConfig.senderId +':'+serviceConfig.tabId;
 	}
 
-	// static getOrCreateInstance(serviceStore, serviceId, serviceConfig, callback) {
-	// 	log('ContentPortServiceService getOrCreateInstance', serviceId, serviceConfig);
-	// 	debugger;
-	//
-	// 	if (serviceId in clients) {
-	// 		console.log('wsc', serviceId, 'exists');
-	// 		process.exit();
-	// 		callback(null, clients[serviceId], false);
-	// 	}
-	// 	else {
-	// 		log('CREATE WSC', serviceId, serviceConfig);
-	//
-	// 		var instance = ContentPortDevice.create(serviceConfig, serviceStore);
-	//
-	// 		log('CREATED WSC CLIENT', instance);
-	//
-	// 		callback(null, clients[serviceId], true);
-	//
-	// 		// instance.on('connect', function() {
-	// 		// 	// console.log('hix');
-	// 		// 	// process.exit();
-	// 		// 	if (callback) callback(null, instance, true);
-	// 		// });
-	// 		//
-	// 		// instance.connect();
-	//
-	// 	}
-	// 	// if (serviceInstance.clients[serviceId]) {
-	// 	// 	let instance = serviceInstance.clients[serviceId];
-	// 	// 	log('RETURNING WSC CLIENT', instance);
-	// 	// 	// process.exit();
-	// 	// 	return instance;
-	// 	// }
-	// 	// else {
-	//
-	// 	// }
-	// }
-
-
-	// static create(config, serviceStore) {
-	// 	var id = ContentPortDevice.id(config);
-	// 	config.id = id;
-	// 	log('create wsc', id);
-	//
-	// 	let client = new ContentPortDevice(config, serviceStore);
-	//
-	// 	return client;
-	// }
-
 	static startJaxcoreDevice(deviceConfig, deviceStore, onDeviceConnectCallback) {
 
-		// function queryActiveTab() {
-		// 	chrome.tabs.query({active: true, currentWindow: true}, function (tabs) {
-		// 		if (tabs.length) {
-		// 			if (activeTabId !== tabs[0].id) {
-		// 				activeTabId = tabs[0].id;
-		// 				tabManager.emit('active', activeTabId);
-		// 			}
-		// 		}
-		// 	});
-		// }
-		//
-		// function sendMessageActiveTab(msg) {
-		// 	chrome.tabs.query({active: true, currentWindow: true}, function (tabs) {
-		// 		if (tabs.length) {
-		// 			chrome.tabs.sendMessage(tabs[0].id, msg, function (response) {
-		// 				console.log('GOT Response', response);
-		// 			});
-		// 		}
-		// 	});
-		// }
-		//
-		// chrome.runtime.onInstalled.addListener(function() {
-		// 	setInterval(queryActiveTab, 1000);
-		// });
-
-
-		// function isPortActiveTab(port) {
-		// 	return port.sender.tab.id === activeTabId;
-		// }
-		
-		// const postMessage = (port, msg) => {
-		// 	if (isPortActiveTab(port)) {
-		// 		port.postMessage(msg);
-		// 	}
-		// 	else {
-		// 		console.log('not active tab');
-		// 	}
-		// };
-
-
-		// function connectTab(port, msg) {
-		// 	let requestPermissions = msg.connectTab.requestPermissions;
-		// 	console.log('connectTab', requestPermissions, port.sender);
-		//
-		// 	debugger;
-		// 	return;
-		//
-		// 	// ContentPortService.ids[]
-		//
-		// 	let id = 'contentPort:'+port.sender.id+':'+port.sender.tab;
-		// 	contentPorts[id] = port;
-		//
-		// 	let adapterConfig = {
-		// 		services: {
-		// 			contentPort: {
-		// 				id: port.sender.id,
-		// 				tab: port.sender.tab,
-		// 				url: port.sender.url
-		// 				// sender: port.sender
-		// 				// frameId: 0
-		// 				// id: "ghhecchfkpfibdmodnhjfnchjkbjceib"
-		// 				// tab: {active: true, audible: false, autoDiscardable: true, discarded: false, favIconUrl: "http://localhost:3000/favicon.ico", …}
-		// 				// url: "http://localhost:3000/"
-		// 			}
-		// 		}
-		// 	};
-		//
-		// 	console.log();
-		// 	debugger;
-		//
-		//
-		// 	return;
-		//
-		// 	connectPortSocket(port, msg,(socket) => {
-		// 		console.log('port socket connected');
-		//
-		// 		port.__socket = socket;
-		//
-		// 		const _dis = function(event) {
-		// 			console.log('destroy socket');
-		// 			socket.destroy();
-		// 			port.onDisconnect.removeListener(_dis);
-		// 		};
-		// 		port.onDisconnect.addListener(_dis);
-		//
-		// 		port.postMessage({
-		// 			connectedExtension: true
-		// 		});
-		//
-		// 	}, () => {
-		// 		console.log('port socket disconnected');
-		//
-		// 		port.postMessage({
-		// 			connectedExtension: false
-		// 		});
-		//
-		// 		port.disconnect();
-		// 	});
-		//
-		// }
 
 		function onPortConnect(port) {
 			console.log('onPortConnect', port);
@@ -439,14 +290,6 @@ class ContentPortDevice extends Client {
 			if (request.connectExtension) {
 				console.log('background received connectExtension ????');
 
-				// connect(() => {
-				// 	console.log('connected socket');
-				// 	sendResponse({connectedExtension: true});
-				// }, () => {
-				// 	console.log('diconnected socket');
-				// });
-				//sendResponse({connectingExtension: true});
-
 			}
 			else {
 				sendResponse({backgroundResponse: "background says hello"});
@@ -463,7 +306,5 @@ class ContentPortDevice extends Client {
 		// chrome.runtime.onMessage.addListener(onPortMessage); // message from web page
 	}
 }
-
-// module.exports = ContentPortDevice;
 
 module.exports = ContentPortDevice;

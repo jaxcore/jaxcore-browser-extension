@@ -3,7 +3,7 @@ const {Adapter} = require('jaxcore-plugin');
 class ContentPortAdapter extends Adapter {
 	static getDefaultState() {
 		return {
-			tabActive: false
+		
 		};
 	}
 	
@@ -13,7 +13,6 @@ class ContentPortAdapter extends Adapter {
 		const {extension} = services;
 		
 		// extension.portConnected(contentPort.id);
-		
 		// extension.getPermissions(contentPort.id);
 		// let spinStore = extension.getSpinStore();
 		
@@ -22,9 +21,12 @@ class ContentPortAdapter extends Adapter {
 		this.addEvents(contentPort, {
 			connectTab: function (requestedPrivileges) {
 				this.log('contentPort connectTab', 'requestedPrivileges', requestedPrivileges);
-				debugger;
-				extension.connectTab(contentPortId, requestedPrivileges);
-				debugger;
+				// debugger;
+				const senderId = contentPort.state.senderId;
+				const tabId = contentPort.state.tabId;
+				
+				extension.connectTab(contentPortId, requestedPrivileges, senderId, tabId);
+				// debugger;
 			},
 			spinCommand: function (command) {
 				this.log('contentPort change', changes);
@@ -38,13 +40,14 @@ class ContentPortAdapter extends Adapter {
 				contentPort.spinUpdate(id, changes);
 			},
 			'websocketclientConnect': function (websocketClientId) {
-				debugger;
+				// debugger;
 				contentPort.websocketConnected(true, websocketClientId);
 			},
 			'websocketclientDisconnect': function (websocketClientId) {
-				debugger;
+				// debugger;
 				contentPort.websocketConnected(false, websocketClientId);
 			}
+			
 		};
 		
 		let connectedEvent = contentPortId + ':connected';
@@ -56,22 +59,22 @@ class ContentPortAdapter extends Adapter {
 				grantedPrivileges,
 				websocketConnected
 			});
-			debugger;
+			// debugger;
 		};
 		// extension.portConnected(contentPort.id);
 		
 		let activatedEvent = contentPortId + ':activated';
 		extensionEvents[activatedEvent] = function () {
-			console.log('port activated', contentPortId);
+			this.log('port activated', contentPortId);
 			contentPort.setActive(true);
-			debugger;
+			// debugger;
 		};
 		
-		let deactivatedEvent = contentPortId + ':dectivated';
+		let deactivatedEvent = contentPortId + ':deactivated';
 		extensionEvents[deactivatedEvent] = function () {
-			console.log('port deactivated', contentPortId);
+			this.log('port deactivated', contentPortId);
 			contentPort.setActive(false);
-			debugger;
+			// debugger;
 		};
 		this.addEvents(extension, extensionEvents);
 	}
