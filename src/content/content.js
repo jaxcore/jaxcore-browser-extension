@@ -127,14 +127,41 @@ window.addEventListener("message", function(event) {
 			}
 		}
 		else if ('pageMessage' in event.data.jaxcore) {
-			// if ('spin' in event.data.jaxcore.device) {
-			// 	console.log('content spin message', event.data.jaxcore.device.spin);
-			// 	debugger;
-			// }
-			debugger;
+			// debugger;
+			if ('spin' in event.data.jaxcore.pageMessage) {
+				// if 'spin' in grantedPriveleges
+				if (event.data.jaxcore.pageMessage.spin.command) {
+					let spinCommand = event.data.jaxcore.pageMessage.spin.command;
+					if (typeof spinCommand.id === 'string' &&
+						typeof spinCommand.method === 'string' &&
+						typeof spinCommand.args === 'object' && ('length' in spinCommand.args) ) { // todo: method/args validation
+						console.log('bgPort sending', spinCommand);
+						bgPort.postMessage({
+							spinCommand
+						});
+					}
+					else {
+						debugger;
+					}
+				}
+				else {
+					debugger;
+				}
+			}
+			else {
+				debugger;
+			}
 		}
 		else {
-			// debugger;
+			if ('contentHandshake' in event.data.jaxcore) {
+				// ignore own message sent to window
+			}
+			else if ('contentMessage' in event.data.jaxcore) {
+				// ignore own message sent to window
+			}
+			else {
+				debugger;
+			}
 		}
 	}
 	else {

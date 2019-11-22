@@ -111,69 +111,14 @@ class ContentPortDevice extends Client {
 			
 			
 		}
+		else if ('spinCommand' in msg) {
+			this.log('got spin command', msg.spinCommand);
+			this.emit('spin-command', msg.spinCommand.id, msg.spinCommand.method, msg.spinCommand.args);
+		}
 		else {
 			console.log('bg recieved:', msg);
 			debugger;
 		}
-
-
-		// if (msg.listenCommand) {
-		// 	if (port.__socket) {
-		// 		console.log('listenCommand sending to socket', msg);
-		// 		// debugger;
-		// 		port.__socket.emit('listen-command', msg.listenCommand);
-		// 	}
-		// 	else {
-		// 		console.log('spinCommand no socket for port', msg);
-		// 		// debugger;
-		// 	}
-		// }
-		// else if (msg.spinCommand) {
-		//
-		// 	if (port.__socket) {
-		// 		console.log('spinCommand sending to socket', msg);
-		// 		// debugger;
-		// 		port.__socket.emit('spin-command', msg.spinCommand);
-		// 	}
-		// 	else {
-		// 		console.log('spinCommand no socket for port', msg);
-		// 		debugger;
-		// 	}
-		//
-		// }
-		// else if (msg.connectExtension) {
-		// 	console.log('BG received from content: connectExtension');
-		//
-		// 	//
-		// 	// connectPortSocket(port, (socket) => {
-		// 	// 	console.log('port socket connected');
-		// 	//
-		// 	// 	port.__socket = socket;
-		// 	//
-		// 	// 	const _dis = function(event) {
-		// 	// 		console.log('destroy socket');
-		// 	// 		socket.destroy();
-		// 	// 		port.onDisconnect.removeListener(_dis);
-		// 	// 	};
-		// 	// 	port.onDisconnect.addListener(_dis);
-		// 	//
-		// 	// 	port.postMessage({
-		// 	// 		connectedExtension: true
-		// 	// 	});
-		// 	//
-		// 	// }, () => {
-		// 	// 	console.log('port socket disconnected');
-		// 	//
-		// 	// 	port.postMessage({
-		// 	// 		connectedExtension: false
-		// 	// 	});
-		// 	//
-		// 	// 	port.disconnect();
-		// 	// });
-		// }
-		// else {
-		// 	console.log('unhandled message', msg);
-		// }
 	};
 	
 	setConnected(portConnected, msg) {

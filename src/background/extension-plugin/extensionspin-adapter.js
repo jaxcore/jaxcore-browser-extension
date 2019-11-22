@@ -12,12 +12,17 @@ class SpinExtensionAdapter extends Adapter {
 		const {spin} = devices;
 		const {extension} = services;
 		
-		this.addEvents(extension, {
-			spinCommand: function(command) {
-				this.log('extensionSevice spin command', command);
-				spin.spinUpdate(command);
-			}
-		});
+		const extensionEvents = {};
+		const evt = 'spin-command-'+spin.id;
+		extensionEvents[evt] = function(id, method, args) {
+			let commandArgs = args;
+			commandArgs.unshift(method);
+			// commandArgs.unshift(id);
+			this.log('extensionSevice spin sendCommand', commandArgs);
+			
+			spin.sendCommand.apply(spin, commandArgs);
+		};
+		this.addEvents(extension, extensionEvents);
 		
 		this.addEvents(spin, {
 			update: function(changes) {

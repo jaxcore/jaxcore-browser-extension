@@ -211,6 +211,10 @@ class ExtensionService extends Service {
 		});
 	}
 	
+	spinCommand(id, method, args) {
+		this.emit('spin-command-'+id, id, method, args);
+	}
+	
 	// portConnected(contentPortId) {
 	// 	console.log('DELETE THIS?');
 	// 	// this.log('websocketSpin', jaxcore.stores.devices['websocketSpin']);

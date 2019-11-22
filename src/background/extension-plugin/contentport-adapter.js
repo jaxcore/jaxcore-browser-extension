@@ -34,9 +34,10 @@ class ContentPortAdapter extends Adapter {
 					contentPort.spinUpdate(id, spinStore[id]);
 				}
 			},
-			spinCommand: function (command) {
-				this.log('contentPort change', changes);
-				extension.spinCommand(command);
+			spinCommand: function (id, method, args) {
+				this.log('contentPort spinCommand', id, method, args);
+				// debugger;
+				extension.spinCommand(id, method, args);
 			}
 		});
 		
