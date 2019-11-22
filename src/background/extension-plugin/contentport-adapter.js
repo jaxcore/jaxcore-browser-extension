@@ -27,12 +27,9 @@ class ContentPortAdapter extends Adapter {
 				
 				extension.connectTab(contentPortId, requestedPrivileges, senderId, tabId);
 				
-				const spinStore = extension.getSpinStore();
-				// console.log(spinStore);
-				for (let id in spinStore) {
-					// debugger;
-					contentPort.spinUpdate(id, spinStore[id]);
-				}
+				// debugger;
+				//
+				
 			},
 			spinCommand: function (id, method, args) {
 				this.log('contentPort spinCommand', id, method, args);
@@ -73,6 +70,13 @@ class ContentPortAdapter extends Adapter {
 				grantedPrivileges,
 				websocketConnected
 			});
+			
+			const spinStore = extension.getSpinStore();
+			console.log(spinStore);
+			
+			for (let id in spinStore) {
+				contentPort.spinUpdate(id, spinStore[id]);
+			}
 			// debugger;
 		};
 		// extension.portConnected(contentPort.id);

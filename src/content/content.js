@@ -63,6 +63,7 @@ function connectExtension(requestPrivileges) {
 	
 	bgPort.onMessage.addListener(function(msg) {
 		if ('spinUpdate' in msg) {
+			
 			postMessageToWinow({
 				spinUpdate: msg.spinUpdate
 			});
@@ -80,6 +81,7 @@ function connectExtension(requestPrivileges) {
 				portActive: msg.portActive
 			});
 		}
+		
 		else if ('websocket' in msg) {
 			let websocketClientId = msg.websocket.id;
 			console.log('websocket', 'websocketClientId='+websocketClientId, msg);

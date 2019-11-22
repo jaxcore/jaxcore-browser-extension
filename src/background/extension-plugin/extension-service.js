@@ -187,6 +187,9 @@ class ExtensionService extends Service {
 				// debugger;
 				// this.emit(this.state.activePortId + ':spin-update', id, jaxcore.deviceClasses.websocketSpin.spinIds[id].state);
 			}
+			else {
+				console.log('not connected');
+			}
 		}
 		return store;
 	}

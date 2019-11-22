@@ -12,6 +12,10 @@ class SpinExtensionAdapter extends Adapter {
 		const {spin} = devices;
 		const {extension} = services;
 		
+		this.log('created');
+		spin.state.connected = true; // todo: hack
+		extension.spinUpdate(spin.id, spin.state);
+		
 		const extensionEvents = {};
 		const evt = 'spin-command-'+spin.id;
 		extensionEvents[evt] = function(id, method, args) {
@@ -25,6 +29,11 @@ class SpinExtensionAdapter extends Adapter {
 		this.addEvents(extension, extensionEvents);
 		
 		this.addEvents(spin, {
+			disconnect: function() {
+				extension.spinUpdate(spin.id, {
+					connected: false
+				});
+			},
 			update: function(changes) {
 				this.log('spin update to extensionSevice', changes);
 				extension.spinUpdate(spin.id, changes);
