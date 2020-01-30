@@ -1,6 +1,6 @@
 {
   "name": "jaxcore-browser-extension",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Jaxcore Browser Extension",
   "main": "webpack.config.js",
   "scripts": {
@@ -17,7 +17,7 @@
     "babel-loader": "^8.0.0-beta.3",
     "chai": "^4.1.2",
     "clean-webpack-plugin": "^0.1.19",
-    "copy-webpack-plugin": "^4.5.1",
+    "copy-webpack-plugin": "^5.1.1",
     "css-loader": "^2.1.1",
     "enzyme": "^3.3.0",
     "enzyme-adapter-react-16": "^1.1.1",
@@ -37,7 +37,7 @@
     "karma-sourcemap-loader": "^0.3.7",
     "karma-webpack": "^3.0.0",
     "mocha": "^5.2.0",
-    "node-sass": "^4.11.0",
+    "node-sass": "^4.13.1",
     "prop-types": "^15.6.1",
     "react": "^16.4.0",
     "react-dom": "^16.4.0",

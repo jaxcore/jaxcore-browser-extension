@@ -1,4 +1,4 @@
-const {Adapter} = require('jaxcore-plugin');
+const {Adapter} = require('jaxcore');
 
 class SpinExtensionAdapter extends Adapter {
 	static getDefaultState() {
@@ -13,7 +13,7 @@ class SpinExtensionAdapter extends Adapter {
 		const {extension} = services;
 		
 		this.log('created');
-		spin.state.connected = true; // todo: hack
+		//spin.state.connected = true; // todo: hack
 		extension.spinUpdate(spin.id, spin.state);
 		
 		const extensionEvents = {};

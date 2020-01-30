@@ -1,6 +1,6 @@
 // import EventEmitter from 'events';
 
-const {Client, createLogger} = require('jaxcore-plugin');
+const {Client, createLogger} = require('jaxcore');
 
 // const log = createLogger('ContentPortService');
 

@@ -1,4 +1,4 @@
-const {Adapter} = require('jaxcore-plugin');
+const {Adapter} = require('jaxcore');
 
 class ContentPortAdapter extends Adapter {
 	static getDefaultState() {

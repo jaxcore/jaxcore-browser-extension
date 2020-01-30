@@ -8,6 +8,7 @@ const JAXCORE_PROTOCOL_VERSION = 2;
 console.log('Jaxcore extension starting', 'version='+JAXCORE_EXTENSION_VERSION, 'protocol='+JAXCORE_PROTOCOL_VERSION);
 
 jaxcore.addPlugin(require('./extension-plugin'));
+jaxcore.addPlugin(require('jaxcore-websocket-plugin/websocket-client'));
 
 jaxcore.on('device-connected', function(type, device) {
 	if (type === 'contentPort') {
@@ -18,12 +19,14 @@ jaxcore.on('device-connected', function(type, device) {
 	}
 });
 
-jaxcore.startService('extension', null, null, {
+jaxcore.startService('extension', {
 	host: 'localhost',
 	port: 37524,
 	jaxcoreVersion: JAXCORE_EXTENSION_VERSION,
 	protocolVersion: JAXCORE_PROTOCOL_VERSION,
 	jaxcore
+}, function(err, service) {
+	console.log('service', service);
 });
 
 jaxcore.startDevice('contentPort');

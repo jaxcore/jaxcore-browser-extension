@@ -63,7 +63,7 @@ function connectExtension(requestPrivileges) {
 	
 	bgPort.onMessage.addListener(function(msg) {
 		if ('spinUpdate' in msg) {
-			
+			// console.log('CONTENT.JS spinUpdate', msg.spinUpdate);
 			postMessageToWinow({
 				spinUpdate: msg.spinUpdate
 			});

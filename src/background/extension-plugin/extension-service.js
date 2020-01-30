@@ -1,4 +1,4 @@
-const {Service, createLogger} = require('jaxcore-plugin');
+const {Service, createLogger} = require('jaxcore');
 
 const log = createLogger('ExtensionService');
 
@@ -243,7 +243,6 @@ class ExtensionService extends Service {
 		
 		console.log('serviceConfig', serviceId, serviceConfig);
 		
-		// debugger;
 		if (serviceConfig.jaxcore) {
 			if (!jaxcore) {
 				jaxcore = serviceConfig.jaxcore;
