@@ -73,6 +73,11 @@ class ExtensionService extends Service {
 					websocketClientConnected: true
 				});
 				this.emit('websocketclient-connect', device.id);
+				
+				websocketClient.on('speech-recognize', (text) => {
+					console.log('SPEECH-RECOGNIZE', text);
+					this.emit('speech-recognize', text);
+				});
 			}
 			else console.log('service-connected', type, device.id);
 		};

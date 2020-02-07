@@ -50,8 +50,10 @@ class ContentPortAdapter extends Adapter {
 			'websocketclientDisconnect': function (websocketClientId) {
 				// debugger;
 				contentPort.websocketConnected(false, websocketClientId);
+			},
+			'speech-recognize': function(text) {
+				contentPort.speechRecognize(text);
 			}
-			
 		};
 		
 		let spinUpdateEvent = contentPortId + ':spin-update';

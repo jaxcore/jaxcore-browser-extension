@@ -62,6 +62,12 @@ function connectExtension(requestPrivileges) {
 	});
 	
 	bgPort.onMessage.addListener(function(msg) {
+		if ('speechRecognize' in msg) {
+			postMessageToWinow({
+				speechRecognize: msg.speechRecognize
+			});
+		}
+		
 		if ('spinUpdate' in msg) {
 			// console.log('CONTENT.JS spinUpdate', msg.spinUpdate);
 			postMessageToWinow({

@@ -170,6 +170,14 @@ class ContentPortDevice extends Client {
 		});
 	}
 	
+	speechRecognize(text) {
+		this.postToContentScript({
+			speechRecognize: {
+				text
+			}
+		});
+	}
+	
 	spinUpdate(id, changes) {
 		this.postToContentScript({
 			spinUpdate: {
