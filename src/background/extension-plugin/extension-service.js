@@ -74,9 +74,10 @@ class ExtensionService extends Service {
 				});
 				this.emit('websocketclient-connect', device.id);
 				
-				websocketClient.on('speech-recognize', (text) => {
-					console.log('SPEECH-RECOGNIZE', text);
-					this.emit('speech-recognize', text);
+				websocketClient.on('speech-recognize', (text, stats) => {
+					console.log('SPEECH-RECOGNIZE', text, stats);
+					// this.emit('speech-recognize', text);
+					this.emit(this.state.activePortId + ':speech-recognize', text, stats);
 				});
 			}
 			else console.log('service-connected', type, device.id);

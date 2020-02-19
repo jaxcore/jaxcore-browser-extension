@@ -63,6 +63,7 @@ function connectExtension(requestPrivileges) {
 	
 	bgPort.onMessage.addListener(function(msg) {
 		if ('speechRecognize' in msg) {
+			console.log('CONTENT received speechRecognize', msg);
 			postMessageToWinow({
 				speechRecognize: msg.speechRecognize
 			});
